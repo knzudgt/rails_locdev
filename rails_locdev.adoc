@@ -1,0 +1,17 @@
+= Heading Level 1
+:icons: font
+:source-highlighter: highlightjs
+:highlightjs-theme: github
+This is a short presentation on AsciiDoc's core capabilities.
+
+Preview as you type, including formatting like *this* or _this_
+
+It automatically preview as you type
+
+WARNING: You need to install AsciiDoc
+
+[source,ruby]
+----
+require 'asciidoctor'  # <1>
+puts Asciidoctor.convert_file 'mysample.adoc'  # <2>
+----
