@@ -1,17 +1,937 @@
-= Heading Level 1
 :icons: font
 :source-highlighter: highlightjs
-:highlightjs-theme: github
-This is a short presentation on AsciiDoc's core capabilities.
+:sectanchors:
+:highlightjs-theme: default
+:toc: left
 
-Preview as you type, including formatting like *this* or _this_
+= Rails local development environment
+How to master your Ruby on Rails development environment
 
-It automatically preview as you type
+To those interested in learning Ruby on Rails I strongly recommend Michael Hartl's https://www.railstutorial.org/[Ruby on Rails Tutorial], first of all because it is the best tutorial on Ruby on Rails you can find in Internet, and secondly because it is the best tutorial on Ruby on Rails. 
 
-WARNING: You need to install AsciiDoc
+Moreover this documentation is largely based upon it, requires in fact the intention to follow that tutorial and from some point onwards requires its completion.
 
-[source,ruby]
+In the first part of this documentation, called "_Rails local development environment_", I decided to share instructions on how to switch from a cloud development environment like Cloud9, suggested in the aforementioned tutorial, to a local development environment, that is your own computer. The advantages in this changes are many. First of all your computer does not have the limitations that Cloud9 has, so you will not encounter warnings like "This Environment is Running Low on Memory" or "This Environment Has High CPU Load". Also, Cloud9 has space limit, so there are limitations in the number of projects that it will be capable of hosting. Using your own computer as development environment you will not need to think of upgrading to a payed plan. Last but not least consider that Cloud9 is part of Amazon AWS since July 2016. As you can read https://en.wikipedia.org/wiki/Cloud9_IDE[on Wikipedia], "On April 2 2019, Cloud9 announced that users would not be able to create new and use old workspaces on c9.io (aka original version, not Amazon Cloud9) after June 30, 2019". In fact, that is exactly what happened to me: after June 2019 I was no more able to use my old workspaces, they were gone, vanished. Switching to my computer as IDE was a matter of necessity. Using your computer as IDE may spare you from bad experiences like mine.
+
+== Ubuntu, rvm and PostgreSQL
+
+=== UBUNTU
+
+This documentation requires Ubuntu as operative system.
+
+=== Login shell
+
+Using RVM without properly configuring your terminal emulator, you may encounter the following issue:
+
+[source, console]
 ----
-require 'asciidoctor'  # <1>
-puts Asciidoctor.convert_file 'mysample.adoc'  # <2>
+$ rvm use 2.0.0
+
+RVM is not a function, selecting rubies with 'rvm use ...' will not work.
+
+You need to change your terminal emulator preferences to allow login shell.
+Sometimes it is required to use `/bin/bash --login` as the command.
+Please visit https://rvm.io/integration/gnome-terminal/ for a example.
+----
+
+In order to be able to run RVM as a function it is necessary to run your console as login shell. Open your Ubuntu terminal and ago to Edit > Preferences > Command. Then check 'Run command as a login shell'. See https://unix.stackexchange.com/a/46856/184919[at StackExchange] the differences between a login shell and a non-logging shell.
+
+=== RVM
+
+In the course of your career as developer you will find the necessity to use different versions of Ruby. You may start to create an application with a certain Ruby version, then realize, when it is completed, that in meantime Ruby was upgraded, so the new version is available for your next projects. Every project requires a certain amount of time for its completion and during that time Ruby, be certain, will be upgraded. This is why it is necessary to switch from a Ruby version to another one every time you switch from and to different applications. In fact, bear in mind that, as it is written in Chapter 7 of the Ruby on Rails Tutorial, "__should you ever end up running a mission-critical app... specifying an exact Ruby version in the Gemfile is recommended to ensure maximum compatibility between development and production environments__". 
+
+There are different version managers. The most used are RVM and rbenv. This documentation is about https://rvm.io/[RVM].
+
+RVM has a dedicated https://github.com/rvm/ubuntu_rvm[Ubuntu package], as written in the https://rvm.io/rvm/install#ubuntu[RVM documentation].
+
+A fundamental idea grounded in RVM is the opportunity to work with different gemsets. A gemset is a collection of Ruby gems necessary for the working of an application. So, if you have different applications, you will also end up with different gemsets. This is so useful because every application will be developed in a closed environment, with all its required Ruby gems, included Rails. So, if you have two application, say Fireworks and Watergames, each of these application will have its own collection of Ruby gems because they are different applications that require different Ruby gems.
+
+You need *software-properties-common* installed in order to add PPA repositories.
+Check if it is installed:
+
+[source, console]
+----
+$ dpkg -l software-properties-common
+----
+
+If not installed, open a terminal and run:
+
+[source, console]
+----
+$ sudo apt install software-properties-common
+----
+
+Add the PPA and install the package:
+
+[source, console]
+----
+$ sudo apt-add-repository -y ppa:rael-gc/rvm
+$ sudo apt update
+$ sudo apt install rvm
+----
+
+Now, in order to always load rvm, change the Gnome Terminal as follows:
+
+At terminal window, click Edit > Preferences > Command and check "_Run command as login shell_". + 
+Reboot your system.
+
+Now you're ready to install rubies. Open a terminal and run:
+
+[source, console]
+----
+$ rvm install 2.7.1
+----
+
+This will install Ruby version 2.7.1 + 
+If you want to install another version of Ruby, replace "2.7.1" with your chosen version of Ruby.
+
+To see all installed Ruby environments, run the following command:
+
+[source, console]
+----
+$ rvm list
+----
+
+The output of the "rvm list" command will be like the following:
+
+[source, console]
+----
+ * ruby-2.5.1 [ x86_64 ]
+=> ruby-2.7.1 [ x86_64 ]
+
+# => - current
+# =* - current && default
+#  * - default
+----
+
+The above output says that in the system there are `Ruby 2.5.1` and `Ruby 2.7.1`. + 
+`Ruby 2.5.1` is the default Ruby interpreter while `Ruby 2.7.1` is the current Ruby interpreter.
+
+To use a particular Ruby version:
+
+[source, console]
+----
+$ rvm use 2.7.1
+----
+
+Since you installed only Ruby 2.7.1 the output of the "rvm list" command will be:
+
+[source, console]
+----
+=* ruby-2.7.1 [ x86_64 ]
+
+# => - current
+# =* - current && default
+#  * - default
+----
+
+Check what Ruby gemsets are installed in your system:
+
+[source, console]
+----
+$ rvm gemset list
+----
+
+The output will be as follows:
+
+[source, console]
+----
+gemsets for ruby-2.7.1 (found in /home/knzudgt/.rvm/gems/ruby-2.7.1)
+=> (default)
+   global
+----
+
+When you install a ruby, two gemsets will be created, the global gemset and the default gemset. As written in the RVM documentation, "the 'global' gemset is to allow you to share gems to all your gemsets. The word 'default' quite literally says it all, eg. the gemset used without selecting one for a specific installed ruby". If you don't use a gemset at all, you get the gems in the 'default' set. If you use a specific gemset (say @fireworks), it will inherit gems from that ruby's @global.
+
+==== RVM’s Global Gemset
+
+To see what gems are installed in the “global” gemset:
+
+[source, console]
+----
+$ rvm gemset use global
+$ gem list
+----
+
+To get a list of gems that are outdated:
+
+[source, console]
+----
+$ gem outdated
+----
+
+A trouble-free development environment requires the newest versions of the default gems. + 
+To update all stale gems, if any:
+
+[source, console]
+----
+$ gem update
+----
+
+Check that 'bundler' and 'Nokogiri' are included in the 'global' gemset looking at the output of command 'gem list'. The Bundler gem is an essential tool for managing gems when developing and running Rails applications. Nokogiri is a gem that is a dependency for many other gems. See at http://railsapps.github.io/installrubyonrails-ubuntu.html[railsapp]. 
+
+Install 'Nokogiri' in the global gemset, so that it is included in every new rails application.
+It is possible to install a gem in any gemset. In this case with the previous 'rvm gemset use global' command we entered in the global gemset. With the command below we will install 'nokogiri' in the current, global gemset:
+
+[source, console]
+----
+$ gem install nokogiri
+----
+
+'bundler' should already be installed in the global gemset. If it is not installed, do it with the following command:
+
+[source, console]
+----
+$ gem install bundler
+----
+
+=== PostgreSQL
+
+As it is written in Chapter 3 of the Ruby on Rails Tutorial, "_Generally speaking, it’s a good idea for the development and production environments to match as closely as possible, which includes using the same database, so I recommend eventually learning how to install and configure PostgreSQL in development_".
+
+Since installing and configuring PostgreSQL in Ubuntu is not that difficult, I suggest to do it as soon as possible.
+
+PostgreSQL can be installed as package from the Ubuntu repository or installed from the PostgreSQL apt repository. Ubuntu "snapshots" a specific version of PostgreSQL, while the PostgreSQL Apt Repository will provide automatic updates for all supported versions of PostgreSQL throughout the support lifetime of PostgreSQL (https://www.postgresql.org/download/linux/ubuntu/[See PostgreSQL documentation]). 
+
+This documentation is about installing PostgrSQL as Ubuntu package from the official Ubuntu repository.
+
+To install the server locally use the command line and type: 
+
+[source, console]
+----
+$ sudo apt update
+$ sudo apt install postgresql postgresql-contrib
+----
+
+This will install the latest version available in your Ubuntu release and the commonly used add-ons for it. + 
+Check if your system has already the package `libpq-dev`:
+
+[source, console]
+----
+$ dpkg -l libpq-dev
+----
+
+If it is not installed, install it or you may encounter problems while installing gem 'pg':
+
+[source, console]
+----
+$ sudo apt install libpq-dev
+----
+
+See https://stackoverflow.com/a/6040822/5078888[at Stackoverflow].
+
+To check version and path of the freshly installed postgresql run the following commands:
+
+[source, console]
+----
+$ psql --version
+$ which psql
+----
+
+By default, when PostgreSQL is installed, a postgres user is also added, with no set password. It also creates a system account with same name ‘postgres’. Precisely, "_by default Postgres uses a concept called “roles” to handle in authentication and authorization. These are, in some ways, similar to regular Unix-style accounts, but Postgres does not distinguish between users and groups and instead prefers the more flexible term “role”_ " (See https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-18-04[at Digitalocean]). To avoid confusion, we will refer to roles as 'users'.
+
+You can check this running the command:
+
+[source, console]
+----
+$ cat /etc/passwd
+----
+
+On most Unix and Linux distributions the default authentication mode is set to 'ident' which means a given Unix user X can only connect as the postgres user X. If a user (role) exists within Postgres, a Unix/Linux username with the same name is able to sign in as that role. (See https://www.postgresql.org/docs/10/auth-methods.html[PostgreSQL documentation]).
+
+
+With the default authentication method "_if your Ubuntu username is 'foo' and you add 'foo' as a Postgresql user then you can connect to the database without requiring a password_". "_Since the only user who can connect to a fresh install is the postgres user, here is how to create yourself a database account (which is in this case also a database superuser) with the same name as your login name_":
+
+[source, console]
+----
+$ sudo -u postgres createuser --superuser $USER
+----
+
+See: https://help.ubuntu.com/community/PostgreSQL#Alternative_Server_Setup[help.ubuntu.com]
+
+NOTE: It is advisable not to set a password for the newly created postgres user so that this information, written in config/database.yml, will not be sent over the internet. On the other hand, most people add database.yml to their .gitignore file so it stays out of version control.
+
+To connect to PostgreSQL as $USER we must specify which database we want to connect to:
+
+[source, console]
+----
+$ psql -d postgres
+----
+
+
+After log in we could check the list of databases with '\l':
+
+[source, console]
+----
+postgres=# \l
+
+List of databases
+Name    |  Owner   | Encoding |   Collate   |    Ctype    |   Access privileges
+-----------+----------+----------+-------------+-------------+-----------------------
+postgres  | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 |
+template0 | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/postgres          +
+          |          |          |             |             | postgres=CTc/postgres
+template1 | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 | =c/postgres          +
+          |          |          |             |             | postgres=CTc/postgres
+(3 rows)
+----
+
+As you can see postgresql creates three databases by default.
+Information on template0 and template1 databases can be found http://www.postgresql.org/docs/current/static/manage-ag-templatedbs.html[in the PostgreSQL documentation].
+
+Exit from postgres with \q:
+
+[source, console]
+----
+postgres=# \q
+----
+
+=== Redis
+
+This short documentation is part of a broader documentation about Ruby on Rails. If you think that your application will have a considerable amount of traffic, my personal advise is to deploy your application not to Heroku, as suggested by the Ruby on Rails Tutorial, but to a different hosting provider, which offers affordable plans. You should consider that Heroku in fact is expensive as you https://www.speedshop.co/2015/07/29/scaling-ruby-apps-to-1000-rpm.html[scale]. The free plan offers only 1 web and 1 worker dynos. _Adding more web dynos allows you to handle more concurrent HTTP requests, and therefore higher volumes of traffic_ (See https://devcenter.heroku.com/articles/dynos#scalability[at Heroku]). Worker dynos are important too. "_Worker dynos can be of any process type declared in your Procfile, other than “web”. Worker dynos are typically used for background jobs, queueing systems, and timed jobs_". Especially background processes are a fundamental part of web applications. For instance, a background process allows to delete automatically all outdated microposts, and free space in your drive. https://github.com/mperham/sidekiq[Sidekiq] is a _simple, efficient background processing for Ruby. It aims to be simple to integrate with any modern Rails application and much higher performance than other existing solutions. Sidekiq uses Redis to store all of its job and operational data_. Since we will use Sidekiq for background processes we will install Redis.
+
+https://redis.io/[Redis] _is an open source (BSD licensed), in-memory data structure store, used as a database, cache and message broker_. Below are the instructions to install Redis in Ubuntu.
+Install redis server with the following command:
+
+[source, console]
+----
+$ sudo apt install redis-server
+----
+
+This will download and install Redis and its dependencies.
+Once the Redis server installation is finished you can check the Redis server version:
+
+[source, console]
+----
+$ redis-server -v
+----
+
+Following installation, there is one important configuration change to make in the Redis configuration file, which was generated automatically during the installation.
+
+Open this file with your preferred text editor:
+
+[source, console]
+----
+$ sudo vi /etc/redis/redis.conf
+----
+
+_Inside the file, find the `supervised` directive. This directive allows you to declare an init system to manage Redis as a service, providing you with more control over its operation. The `supervised` directive is set to no by default. Since you are running Ubuntu, which uses the systemd init system, change this to systemd_:
+
+[source, console]
+----
+...
+# If you run Redis from upstart or systemd, Redis can interact with your
+# supervision tree. Options:
+#   supervised no      - no supervision interaction
+#   supervised upstart - signal upstart by putting Redis into SIGSTOP mode
+#   supervised systemd - signal systemd by writing READY=1 to $NOTIFY_SOCKET
+#   supervised auto    - detect upstart or systemd method based on
+#                        UPSTART_JOB or NOTIFY_SOCKET environment variables
+# Note: these supervision methods only signal "process is ready."
+#       They do not enable continuous liveness pings back to your supervisor.
+supervised systemd
+----
+
+_That’s the only change you need to make to the Redis configuration file at this point, so save and close it when you are finished. Then, restart the Redis service to reflect the changes you made to the configuration file_:
+
+[source, console]
+----
+sudo systemctl restart redis.service
+----
+
+_With that, you’ve installed and configured Redis and it’s running on your machine_. See https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-redis-on-ubuntu-18-04[at DigitalOcean]
+
+checking that the Redis service is running:
+
+[source, console]
+----
+sudo systemctl status redis
+----
+
+If it is running without any errors, this command will produce output similar to the following:
+
+[source, console]
+----
+● redis-server.service - Advanced key-value store
+   Loaded: loaded (/lib/systemd/system/redis-server.service; enabled; vendor preset: enabled)
+   Active: active (running) since Tue 2020-06-09 15:33:02 CEST; 1h 3min ago
+     Docs: http://redis.io/documentation,
+           man:redis-server(1)
+  Process: 1126 ExecStart=/usr/bin/redis-server /etc/redis/redis.conf (code=exited, status=0/SUCCESS)
+ Main PID: 1154 (redis-server)
+    Tasks: 4 (limit: 4915)
+   CGroup: /system.slice/redis-server.service
+           └─1154 /usr/bin/redis-server 127.0.0.1:6379
+
+----
+
+_Here, you can see that Redis is running and is already enabled, meaning that it is set to start up every time the server boots_.
+
+Type `q` (quit) to exit from the previous command.
+
+_To test that Redis is functioning correctly, connect to the server using the command-line client_:
+
+[source, console]
+----
+$ redis-cli
+----
+
+In the prompt that follows, test connectivity with the ping command:
+
+[source, console]
+----
+127.0.0.1:6379> ping
+----
+
+Redis' response will be:
+
+[source, console]
+----
+PONG
+----
+
+This output confirms that the server connection is still alive. Next, check that you’re able to set keys by running:
+
+[source, console]
+----
+127.0.0.1:6379> set test "It's working!"
+----
+
+The outup will be:
+
+[source, console]
+----
+OK
+----
+
+Retrieve the value by typing:
+
+[source, console]
+----
+127.0.0.1:6379> get test
+----
+
+Assuming everything is working, you will be able to retrieve the value you stored:
+
+[source, console]
+----
+"It's working!"
+----
+
+After confirming that you can fetch the value, exit the Redis prompt to get back to the shell:
+
+[source, console]
+----
+127.0.0.1:6379> exit
+----
+
+As a final test, we will check whether Redis is able to persist data even after it’s been stopped or restarted. To do this, first restart the Redis instance:
+
+[source, console]
+----
+$ sudo systemctl restart redis
+----
+
+Then connect with the command-line client once again and confirm that your test value is still available:
+
+[source, console]
+----
+$ redis-cli
+127.0.0.1:6379> get test
+----
+
+The value of your key should still be accessible:
+
+[source, console]
+----
+"It's working!"
+----
+
+Exit out into the shell again when you are finished:
+
+[source, console]
+----
+127.0.0.1:6379> exit
+----
+
+With that, your Redis installation is fully operational and ready for you to use. + 
+For further reading check the well made https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-redis-on-ubuntu-18-04[DigitalOcean documentation], on which this documentation is largely based.
+
+
+
+=== Atom
+
+There are many text editors that you can choose from. My personal choice goes to https://atom.io/[Atom], which is open source and powerful enough for developing Ruby on Rails applications. It is easy to customize with themes created by the Atom community and its functionalities can be expanded with thousands of extensions.
+
+To https://flight-manual.atom.io/getting-started/sections/installing-atom/#debian-and-ubuntu-debapt[install Atom on Ubuntu], add their official package repository to your system by running the following commands:
+
+[source, console]
+----
+$ wget -qO - https://packagecloud.io/AtomEditor/atom/gpgkey | sudo apt-key add -
+$ sudo sh -c 'echo "deb [arch=amd64] https://packagecloud.io/AtomEditor/atom/any/ any main" > /etc/apt/sources.list.d/atom.list'
+$ sudo apt-get update
+----
+
+You can now install Atom using apt:
+
+[source, console]
+----
+$ sudo apt install atom
+----
+
+Have a look at https://github.com/atom/atom[Atom's official GitHub page].
+
+I suggest to install the following packages:
+
+* file-icons
+* linter
+* linter-ruby
+
+`file-icons` assign file extension icons and colours for improved visual grepping. + 
+`linter` analyzes source code to flag programming errors, bugs, stylistic errors, and suspicious constructs. + 
+`linter-ruby` is a specific linter for Ruby.
+
+=== Git aware prompt
+
+"_Working with Git and its great branching/merging features is amazing. Constantly switching branches can be confusing though as you have to run git status to see which branch you're currently on. The solution to this is to have your terminal prompt display the current branch._" See at https://github.com/jimeh/git-aware-prompt[Git Aware Prompt]
+
+jimeh's git-aware-prompt is a solution at the same time simple and elegant.
+
+Clone the project to a .bash folder in your home directory:
+
+[source, console]
+----
+$ mkdir ~/.bash
+$ cd ~/.bash
+$ git clone git://github.com/jimeh/git-aware-prompt.git
+----
+
+Edit your ~/.bashrc file and add the following to the top:
+
+[source, console]
+----
+export GITAWAREPROMPT=~/.bash/git-aware-prompt
+source "${GITAWAREPROMPT}/main.sh"
+----
+
+Paste the following code at the end of ~/.baschrc:
+
+[source, console]
+----
+export PS1="\${debian_chroot:+(\$debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\] \[$txtcyn\]\$git_branch\[$txtred\]\$git_dirty\[$txtrst\]\$ "
+----
+
+Now you have a colorized prompt with the name of the Git branch you are working on.
+
+According to your situation, whether you have to create a new Rails aplication or you decide to import an application already pushed to BitBucket or GitHub or GitLab, you can choose from one of the two sections below:
+
+1. <<Create a new Ruby on Rails application>>
+2. <<Cloning an existing repository and start working>>
+
+
+NOTE: When connecting to GitHub, BitBucket or GitLab, it is recommended to do it via ssh keys. See instructions on how to add your ssh keys at https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-to-your-github-account[GitHub] or at https://confluence.atlassian.com/bitbucket/set-up-an-ssh-key-728138079.html[Bitbucket] (section 4). In general you should copy the content of file `~/.ssh/id_rsa.pub` to your clipboard and past it in the place provided at your Git code management service. 
+
+
+
+=== Create a new Ruby on Rails application
+
+Git should be already installed in Ubuntu.
+Check this with the following command:
+
+[source, console]
+----
+$ git --version
+git version 2.17.1
+----
+
+If it is not installed, run the following commands:
+
+[source, console]
+----
+$ sudo apt update
+$ sudo apt install git
+----
+
+
+You can confirm that you have installed Git correctly by running the following command:
+
+[source, console]
+----
+$ git --version
+git version 2.17.1
+----
+
+Before using Git, you should perform a set of one-time setup steps.
+These are system setups, meaning you only have to do them once per computer:
+
+[source, console]
+----
+$ git config --global user.name "Your Name"
+$ git config --global user.email your.email@example.com
+----
+
+Note that the name and email address you use in your Git configuration will be available in any repositories you make public. Create a new projects folder and move into it:
+
+[source, console]
+----
+$ cd ~
+$ mkdir workspace
+$ cd workspace
+----
+
+This is the place where you will create your Rails applications. + 
+Install, if you need it, the wanted ruby version using the following command:
+
+[source, console]
+----
+$ rvm install 2.7.1
+----
+
+Update, if needed, the gems in the global gemset:
+
+[source, console]
+----
+$ rvm gemset use global
+$ gem outdated
+$ gem update
+----
+
+Create a new directory for the new application:
+
+NOTE: the name of a rails application cannot start with numbers, so name the new directory accordingly
+
+[source, console]
+----
+$ mkdir fireworks
+$ cd fireworks
+----
+
+Switch to the interpreter you want to use for your application:
+
+[source, console]
+----
+$ rvm list
+$ rvm use 2.7.1
+$ rvm list
+----
+
+Create a gemset for the application:
+
+[source, console]
+----
+$ rvm use ruby-2.7.1@fireworks --ruby-version --create
+----
+
+The `--create` option creates the `fireworks` gemset for ruby 2.7.1
+Check that the option `--ruby-version` created the `.ruby-version` and `.ruby-gemset` files in the application's directory:
+
+[source, console]
+----
+$ ls -la
+----
+
+The `.ruby-gemset` and `.ruby-version` files should contain the name of the gemset and the ruby interpreter:
+
+..ruby-gemset
+fireworks
+
+..ruby-version
+ruby-2.7.1
+
+Check also that the current gemset is the one just created:
+
+[source, console]
+----
+$ rvm gemset list
+----
+
+Install rails and create the new application:
+
+[source, console]
+----
+$ gem install rails -v 6.0.0
+$ rails _6.0.0_ new . -d postgresql
+----
+
+NOTE: Use the correct version of the rails gem. The first command installs the rails gem in the selected gemset (fireworks). The installation takes ages. All the dependencies will be also installed. The second command installs files and directories of the rails application in the current directory (as indicated by the `.`) with PostgreSQL as default database (as indicated by the `-d postgresql` option)
+
+Rails automatically initialises new git repositories on `rails new` command If --skip-git is not specified. So the application should be created under Git control (there should be an hidden `.git` directory in the application root path: launch Atom, go to File > Add project folder and add the ~/workspace/fireworks folder; then look at the top for the presence of a .git directory)
+Otherwise, put the application under version control with Git:
+
+[source, console]
+----
+$ git init
+----
+
+Open with Atom your application's database configuration file `config/database.yml`.
+Supposing your Ubuntu login name is 'mark' and you created a PostgreSQL user 'mark', under the `default` section, find the line that says `pool: 5` and add the following line under it:
+
+username: mark
+
+The `config/database.yml` file should be as follows:
+
+[source, yaml]
+----
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  # For details on connection pooling, see rails configuration guide
+  # http://guides.rubyonrails.org/configuring.html#database-pooling
+  pool: 5
+  username: mark
+
+development:
+  <<: *default
+  database: fireworks_development
+
+test:
+  <<: *default
+  database: fireworks_test
+
+production:
+  <<: *default
+  database: fireworks_production
+  pool: 25
+  username: fireworks
+  password: <%= ENV['FIREWORKS_DATABASE_PASSWORD'] %>
+----
+
+Save and exit.
+
+Now edit the Gemfile as wanted. + 
+Remember to remove the `SQLite` (sqlite3) gem and to move the `pg` gem in the global section, so that PostgreSQL will be available in all environments. Remember also to add your application's Ruby version at the top of your Gemfile:
+
+[source, ruby]
+----
+source 'https://rubygems.org'
+
+ruby '2.7.1'
+
+gem 'rails',                   '5.1.6'
+...
+----
+
+
+Install in the application gemset the gems specified in the Gemfile:
+
+[source, console]
+----
+$ bundle install --without production
+----
+
+Initialize the repository:
+
+[source, console]
+----
+$ git add -A
+$ git status
+$ git commit -m "Initialize repository"
+$ git log
+----
+
+Create your application's 'development' and 'test' databases by using the following rails command:
+
+[source, console]
+----
+$ rails db:create
+----
+
+Check that the development and test databases were created with:
+
+[source, console]
+----
+$ psql -d postgres
+----
+
+to list the postgresql databases run: \l + 
+then exit from postgresql with: \q
+
+Now you can create a new repository at GitHub, BitBucket or GitLab and push there your new application. Supposing that you chose BitBucket and you have created a new repository named `fireworks`, follow instructions at BitBucket to add a new origin and push up to the remote repository. For instance, the commands will be as follows:
+
+[source, console]
+----
+$ git remote add origin git@bitbucket.org:mark/fireworks.git
+$ git push -u origin master
+----
+
+
+=== Cloning an existing repository and start working
+
+Supposing that your repository is at BitBucket and that you previously created a `workspace` directory in your computer, open your console and type the following commands:
+
+[source, console]
+----
+$ cd ~/workspace
+$ git clone git@bitbucket.org:mark/fireworks.git fireworks
+----
+
+The previous command creates a `fireworks` directory and makes an exact copy of your repository in it. So now there will be a `~/workspace/fireworks` directory and the fireworks application in it. If you connect to BitBucket or other Git code management services via ssh and you set a password for your ssh key, you will be required to type it.
+
+Move to the application directory:
+
+[source, console]
+----
+$ cd fireworks
+----
+
+NOTE: From now on any suggested command should be run from the application directory (fireworks).
+
+Switch to the interpreter you want to use for your application:
+
+[source, console]
+----
+$ rvm list
+$ rvm use 2.7.1
+----
+
+NOTE: If the cloned application has already a .ruby-version file, rvm would be already set to use the ruby version specified in that file. 
+
+NOTE: If the cloned application has already a `.ruby-gemset` file, rvm would be already set to use the gemset version specified in that file. Also, when moving to the application's directory (fireworks), the gemset specified in `.ruby-gemset` would be created if it already does not exist.
+
+Check the available gemsets:
+
+[source, console]
+----
+$ rvm gemset list
+----
+
+A trouble-free development environment requires in the global gemset the newest versions of the default gems. If you already updated the gems in the globall gemset you can skip this step. The first command switch rvm to the global gemset, the second command show a list of all outdated gem, the third command update all outdated gems.
+
+[source, console]
+----
+$ rvm gemset use global
+$ gem outdated
+$ gem update
+----
+
+If the application was shipped with a `.ruby-gemset` and a `.ruby-version` files, switch rvm to the gemset contained in the `.ruby-gemset` file (fireworks):
+
+[source, console]
+----
+$ rvm gemset list
+$ rvm gemset use fireworks
+----
+
+Otherwise create the 'fireworks' gemset:
+
+[source, console]
+----
+$ rvm use ruby-2.7.1@fireworks --ruby-version --create
+----
+
+The `--create` option creates the `fireworks` gemset for ruby 2.7.1
+The option `--ruby-version` creates the `.ruby-version` and `.ruby-gemset` files in the application's root directory:
+
+..ruby-gemset
+fireworks
+
+..ruby-version
+ruby-2.7.1
+
+Open your application's Gemfile and add at the top the Ruby version:
+
+[source, ruby]
+----
+source 'https://rubygems.org'
+
+ruby '2.7.1'
+
+gem 'rails',                   '5.1.6'
+...
+----
+
+Remove the `SQLite` (sqlite3) gem and move the `pg` gem in the global section, so that PostgreSQL will be available in all environments.
+
+Install in the application gemset the gems specified in the Gemfile:
+
+[source, console]
+----
+$ bundle install --without production
+----
+
+At this point it is necessary to edit `config/database.yml` using the appropriate username under `pool: 5` and the appropriate database names:
+
+[source, yaml]
+----
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  # For details on connection pooling, see rails configuration guide
+  # http://guides.rubyonrails.org/configuring.html#database-pooling
+  pool: 5
+  username: mark
+
+development:
+  <<: *default
+  database: fireworks_development
+
+test:
+  <<: *default
+  database: fireworks_test
+
+production:
+  <<: *default
+  database: fireworks_production
+  pool: 25
+  username: fireworks
+  password: <%= ENV['FIREWORKS_DATABASE_PASSWORD'] %>
+----
+
+Be sure that in the 'default' section postgres is indicated as adapter. + 
+Save and exit.
+
+Create your application's 'development' and 'test' databases by using the following command:
+
+[source, console]
+----
+$ rails db:create
+----
+
+Migrate your new database:
+
+[source, console]
+----
+$ rails db:migrate
+----
+
+Seed the database:
+
+[source, console]
+----
+$ rails db:seed
+----
+
+The original application should already be under version control with Git, and should have already a `.git` directory. Cloning the repository makes a clone also of the `.git` directory, so the `git init` command is not necessary.
+
+Run the test suite. add all the project files to the repository and commit all changes:
+
+[source, console]
+----
+$ rails test
+$ git add -A
+$ git status
+$ git commit -m "Reinitialize project"
+$ git log
+----
+
+In order to push the changes to the old repository, run:
+
+[source, console]
+----
+$ git push -u origin master
+----
+
+Otherwise, set the new origin url and push the changes to a new repository at Bitbucket:
+
+[source, console]
+----
+$ git remote set-url origin git@bitbucket.org:mark/fireworks_app.git
+$ git push -u origin master
+----
+
+After that, we can omit 'origin master', and simply run git push:
+
+[source, console]
+----
+$ git push
 ----
