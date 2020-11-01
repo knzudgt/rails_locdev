@@ -1,0 +1,2581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.10">
+<title>Sendinblue, Dokku and deployment</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<style>
+/* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
+/* Uncomment @import statement to use as custom stylesheet */
+/*@import "https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700";*/
+article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section{display:block}
+audio,video{display:inline-block}
+audio:not([controls]){display:none;height:0}
+html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}
+a{background:none}
+a:focus{outline:thin dotted}
+a:active,a:hover{outline:0}
+h1{font-size:2em;margin:.67em 0}
+abbr[title]{border-bottom:1px dotted}
+b,strong{font-weight:bold}
+dfn{font-style:italic}
+hr{-moz-box-sizing:content-box;box-sizing:content-box;height:0}
+mark{background:#ff0;color:#000}
+code,kbd,pre,samp{font-family:monospace;font-size:1em}
+pre{white-space:pre-wrap}
+q{quotes:"\201C" "\201D" "\2018" "\2019"}
+small{font-size:80%}
+sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}
+sup{top:-.5em}
+sub{bottom:-.25em}
+img{border:0}
+svg:not(:root){overflow:hidden}
+figure{margin:0}
+fieldset{border:1px solid silver;margin:0 2px;padding:.35em .625em .75em}
+legend{border:0;padding:0}
+button,input,select,textarea{font-family:inherit;font-size:100%;margin:0}
+button,input{line-height:normal}
+button,select{text-transform:none}
+button,html input[type="button"],input[type="reset"],input[type="submit"]{-webkit-appearance:button;cursor:pointer}
+button[disabled],html input[disabled]{cursor:default}
+input[type="checkbox"],input[type="radio"]{box-sizing:border-box;padding:0}
+button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}
+textarea{overflow:auto;vertical-align:top}
+table{border-collapse:collapse;border-spacing:0}
+*,*::before,*::after{-moz-box-sizing:border-box;-webkit-box-sizing:border-box;box-sizing:border-box}
+html,body{font-size:100%}
+body{background:#fff;color:rgba(0,0,0,.8);padding:0;margin:0;font-family:"Noto Serif","DejaVu Serif",serif;font-weight:400;font-style:normal;line-height:1;position:relative;cursor:auto;tab-size:4;-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased}
+a:hover{cursor:pointer}
+img,object,embed{max-width:100%;height:auto}
+object,embed{height:100%}
+img{-ms-interpolation-mode:bicubic}
+.left{float:left!important}
+.right{float:right!important}
+.text-left{text-align:left!important}
+.text-right{text-align:right!important}
+.text-center{text-align:center!important}
+.text-justify{text-align:justify!important}
+.hide{display:none}
+img,object,svg{display:inline-block;vertical-align:middle}
+textarea{height:auto;min-height:50px}
+select{width:100%}
+.center{margin-left:auto;margin-right:auto}
+.stretch{width:100%}
+.subheader,.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{line-height:1.45;color:#7a2518;font-weight:400;margin-top:0;margin-bottom:.25em}
+div,dl,dt,dd,ul,ol,li,h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6,pre,form,p,blockquote,th,td{margin:0;padding:0;direction:ltr}
+a{color:#2156a5;text-decoration:underline;line-height:inherit}
+a:hover,a:focus{color:#1d4b8f}
+a img{border:0}
+p{font-family:inherit;font-weight:400;font-size:1em;line-height:1.6;margin-bottom:1.25em;text-rendering:optimizeLegibility}
+p aside{font-size:.875em;line-height:1.35;font-style:italic}
+h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{font-family:"Open Sans","DejaVu Sans",sans-serif;font-weight:300;font-style:normal;color:#ba3925;text-rendering:optimizeLegibility;margin-top:1em;margin-bottom:.5em;line-height:1.0125em}
+h1 small,h2 small,h3 small,#toctitle small,.sidebarblock>.content>.title small,h4 small,h5 small,h6 small{font-size:60%;color:#e99b8f;line-height:0}
+h1{font-size:2.125em}
+h2{font-size:1.6875em}
+h3,#toctitle,.sidebarblock>.content>.title{font-size:1.375em}
+h4,h5{font-size:1.125em}
+h6{font-size:1em}
+hr{border:solid #dddddf;border-width:1px 0 0;clear:both;margin:1.25em 0 1.1875em;height:0}
+em,i{font-style:italic;line-height:inherit}
+strong,b{font-weight:bold;line-height:inherit}
+small{font-size:60%;line-height:inherit}
+code{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;font-weight:400;color:rgba(0,0,0,.9)}
+ul,ol,dl{font-size:1em;line-height:1.6;margin-bottom:1.25em;list-style-position:outside;font-family:inherit}
+ul,ol{margin-left:1.5em}
+ul li ul,ul li ol{margin-left:1.25em;margin-bottom:0;font-size:1em}
+ul.square li ul,ul.circle li ul,ul.disc li ul{list-style:inherit}
+ul.square{list-style-type:square}
+ul.circle{list-style-type:circle}
+ul.disc{list-style-type:disc}
+ol li ul,ol li ol{margin-left:1.25em;margin-bottom:0}
+dl dt{margin-bottom:.3125em;font-weight:bold}
+dl dd{margin-bottom:1.25em}
+abbr,acronym{text-transform:uppercase;font-size:90%;color:rgba(0,0,0,.8);border-bottom:1px dotted #ddd;cursor:help}
+abbr{text-transform:none}
+blockquote{margin:0 0 1.25em;padding:.5625em 1.25em 0 1.1875em;border-left:1px solid #ddd}
+blockquote cite{display:block;font-size:.9375em;color:rgba(0,0,0,.6)}
+blockquote cite::before{content:"\2014 \0020"}
+blockquote cite a,blockquote cite a:visited{color:rgba(0,0,0,.6)}
+blockquote,blockquote p{line-height:1.6;color:rgba(0,0,0,.85)}
+@media screen and (min-width:768px){h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2}
+h1{font-size:2.75em}
+h2{font-size:2.3125em}
+h3,#toctitle,.sidebarblock>.content>.title{font-size:1.6875em}
+h4{font-size:1.4375em}}
+table{background:#fff;margin-bottom:1.25em;border:solid 1px #dedede}
+table thead,table tfoot{background:#f7f8f7}
+table thead tr th,table thead tr td,table tfoot tr th,table tfoot tr td{padding:.5em .625em .625em;font-size:inherit;color:rgba(0,0,0,.8);text-align:left}
+table tr th,table tr td{padding:.5625em .625em;font-size:inherit;color:rgba(0,0,0,.8)}
+table tr.even,table tr.alt{background:#f8f8f7}
+table thead tr th,table tfoot tr th,table tbody tr td,table tr td,table tfoot tr td{display:table-cell;line-height:1.6}
+h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2;word-spacing:-.05em}
+h1 strong,h2 strong,h3 strong,#toctitle strong,.sidebarblock>.content>.title strong,h4 strong,h5 strong,h6 strong{font-weight:400}
+.clearfix::before,.clearfix::after,.float-group::before,.float-group::after{content:" ";display:table}
+.clearfix::after,.float-group::after{clear:both}
+:not(pre):not([class^=L])>code{font-size:.9375em;font-style:normal!important;letter-spacing:0;padding:.1em .5ex;word-spacing:-.15em;background:#f7f7f8;-webkit-border-radius:4px;border-radius:4px;line-height:1.45;text-rendering:optimizeSpeed;word-wrap:break-word}
+:not(pre)>code.nobreak{word-wrap:normal}
+:not(pre)>code.nowrap{white-space:nowrap}
+pre{color:rgba(0,0,0,.9);font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;line-height:1.45;text-rendering:optimizeSpeed}
+pre code,pre pre{color:inherit;font-size:inherit;line-height:inherit}
+pre>code{display:block}
+pre.nowrap,pre.nowrap pre{white-space:pre;word-wrap:normal}
+em em{font-style:normal}
+strong strong{font-weight:400}
+.keyseq{color:rgba(51,51,51,.8)}
+kbd{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;display:inline-block;color:rgba(0,0,0,.8);font-size:.65em;line-height:1.45;background:#f7f7f7;border:1px solid #ccc;-webkit-border-radius:3px;border-radius:3px;-webkit-box-shadow:0 1px 0 rgba(0,0,0,.2),0 0 0 .1em white inset;box-shadow:0 1px 0 rgba(0,0,0,.2),0 0 0 .1em #fff inset;margin:0 .15em;padding:.2em .5em;vertical-align:middle;position:relative;top:-.1em;white-space:nowrap}
+.keyseq kbd:first-child{margin-left:0}
+.keyseq kbd:last-child{margin-right:0}
+.menuseq,.menuref{color:#000}
+.menuseq b:not(.caret),.menuref{font-weight:inherit}
+.menuseq{word-spacing:-.02em}
+.menuseq b.caret{font-size:1.25em;line-height:.8}
+.menuseq i.caret{font-weight:bold;text-align:center;width:.45em}
+b.button::before,b.button::after{position:relative;top:-1px;font-weight:400}
+b.button::before{content:"[";padding:0 3px 0 2px}
+b.button::after{content:"]";padding:0 2px 0 3px}
+p a>code:hover{color:rgba(0,0,0,.9)}
+#header,#content,#footnotes,#footer{width:100%;margin-left:auto;margin-right:auto;margin-top:0;margin-bottom:0;max-width:62.5em;*zoom:1;position:relative;padding-left:.9375em;padding-right:.9375em}
+#header::before,#header::after,#content::before,#content::after,#footnotes::before,#footnotes::after,#footer::before,#footer::after{content:" ";display:table}
+#header::after,#content::after,#footnotes::after,#footer::after{clear:both}
+#content{margin-top:1.25em}
+#content::before{content:none}
+#header>h1:first-child{color:rgba(0,0,0,.85);margin-top:2.25rem;margin-bottom:0}
+#header>h1:first-child+#toc{margin-top:8px;border-top:1px solid #dddddf}
+#header>h1:only-child,body.toc2 #header>h1:nth-last-child(2){border-bottom:1px solid #dddddf;padding-bottom:8px}
+#header .details{border-bottom:1px solid #dddddf;line-height:1.45;padding-top:.25em;padding-bottom:.25em;padding-left:.25em;color:rgba(0,0,0,.6);display:-ms-flexbox;display:-webkit-flex;display:flex;-ms-flex-flow:row wrap;-webkit-flex-flow:row wrap;flex-flow:row wrap}
+#header .details span:first-child{margin-left:-.125em}
+#header .details span.email a{color:rgba(0,0,0,.85)}
+#header .details br{display:none}
+#header .details br+span::before{content:"\00a0\2013\00a0"}
+#header .details br+span.author::before{content:"\00a0\22c5\00a0";color:rgba(0,0,0,.85)}
+#header .details br+span#revremark::before{content:"\00a0|\00a0"}
+#header #revnumber{text-transform:capitalize}
+#header #revnumber::after{content:"\00a0"}
+#content>h1:first-child:not([class]){color:rgba(0,0,0,.85);border-bottom:1px solid #dddddf;padding-bottom:8px;margin-top:0;padding-top:1rem;margin-bottom:1.25rem}
+#toc{border-bottom:1px solid #e7e7e9;padding-bottom:.5em}
+#toc>ul{margin-left:.125em}
+#toc ul.sectlevel0>li>a{font-style:italic}
+#toc ul.sectlevel0 ul.sectlevel1{margin:.5em 0}
+#toc ul{font-family:"Open Sans","DejaVu Sans",sans-serif;list-style-type:none}
+#toc li{line-height:1.3334;margin-top:.3334em}
+#toc a{text-decoration:none}
+#toc a:active{text-decoration:underline}
+#toctitle{color:#7a2518;font-size:1.2em}
+@media screen and (min-width:768px){#toctitle{font-size:1.375em}
+body.toc2{padding-left:15em;padding-right:0}
+#toc.toc2{margin-top:0!important;background:#f8f8f7;position:fixed;width:15em;left:0;top:0;border-right:1px solid #e7e7e9;border-top-width:0!important;border-bottom-width:0!important;z-index:1000;padding:1.25em 1em;height:100%;overflow:auto}
+#toc.toc2 #toctitle{margin-top:0;margin-bottom:.8rem;font-size:1.2em}
+#toc.toc2>ul{font-size:.9em;margin-bottom:0}
+#toc.toc2 ul ul{margin-left:0;padding-left:1em}
+#toc.toc2 ul.sectlevel0 ul.sectlevel1{padding-left:0;margin-top:.5em;margin-bottom:.5em}
+body.toc2.toc-right{padding-left:0;padding-right:15em}
+body.toc2.toc-right #toc.toc2{border-right-width:0;border-left:1px solid #e7e7e9;left:auto;right:0}}
+@media screen and (min-width:1280px){body.toc2{padding-left:20em;padding-right:0}
+#toc.toc2{width:20em}
+#toc.toc2 #toctitle{font-size:1.375em}
+#toc.toc2>ul{font-size:.95em}
+#toc.toc2 ul ul{padding-left:1.25em}
+body.toc2.toc-right{padding-left:0;padding-right:20em}}
+#content #toc{border-style:solid;border-width:1px;border-color:#e0e0dc;margin-bottom:1.25em;padding:1.25em;background:#f8f8f7;-webkit-border-radius:4px;border-radius:4px}
+#content #toc>:first-child{margin-top:0}
+#content #toc>:last-child{margin-bottom:0}
+#footer{max-width:100%;background:rgba(0,0,0,.8);padding:1.25em}
+#footer-text{color:rgba(255,255,255,.8);line-height:1.44}
+#content{margin-bottom:.625em}
+.sect1{padding-bottom:.625em}
+@media screen and (min-width:768px){#content{margin-bottom:1.25em}
+.sect1{padding-bottom:1.25em}}
+.sect1:last-child{padding-bottom:0}
+.sect1+.sect1{border-top:1px solid #e7e7e9}
+#content h1>a.anchor,h2>a.anchor,h3>a.anchor,#toctitle>a.anchor,.sidebarblock>.content>.title>a.anchor,h4>a.anchor,h5>a.anchor,h6>a.anchor{position:absolute;z-index:1001;width:1.5ex;margin-left:-1.5ex;display:block;text-decoration:none!important;visibility:hidden;text-align:center;font-weight:400}
+#content h1>a.anchor::before,h2>a.anchor::before,h3>a.anchor::before,#toctitle>a.anchor::before,.sidebarblock>.content>.title>a.anchor::before,h4>a.anchor::before,h5>a.anchor::before,h6>a.anchor::before{content:"\00A7";font-size:.85em;display:block;padding-top:.1em}
+#content h1:hover>a.anchor,#content h1>a.anchor:hover,h2:hover>a.anchor,h2>a.anchor:hover,h3:hover>a.anchor,#toctitle:hover>a.anchor,.sidebarblock>.content>.title:hover>a.anchor,h3>a.anchor:hover,#toctitle>a.anchor:hover,.sidebarblock>.content>.title>a.anchor:hover,h4:hover>a.anchor,h4>a.anchor:hover,h5:hover>a.anchor,h5>a.anchor:hover,h6:hover>a.anchor,h6>a.anchor:hover{visibility:visible}
+#content h1>a.link,h2>a.link,h3>a.link,#toctitle>a.link,.sidebarblock>.content>.title>a.link,h4>a.link,h5>a.link,h6>a.link{color:#ba3925;text-decoration:none}
+#content h1>a.link:hover,h2>a.link:hover,h3>a.link:hover,#toctitle>a.link:hover,.sidebarblock>.content>.title>a.link:hover,h4>a.link:hover,h5>a.link:hover,h6>a.link:hover{color:#a53221}
+details,.audioblock,.imageblock,.literalblock,.listingblock,.stemblock,.videoblock{margin-bottom:1.25em}
+details>summary:first-of-type{cursor:pointer;display:list-item;outline:none;margin-bottom:.75em}
+.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{text-rendering:optimizeLegibility;text-align:left;font-family:"Noto Serif","DejaVu Serif",serif;font-size:1rem;font-style:italic}
+table.tableblock.fit-content>caption.title{white-space:nowrap;width:0}
+.paragraph.lead>p,#preamble>.sectionbody>[class="paragraph"]:first-of-type p{font-size:1.21875em;line-height:1.6;color:rgba(0,0,0,.85)}
+table.tableblock #preamble>.sectionbody>[class="paragraph"]:first-of-type p{font-size:inherit}
+.admonitionblock>table{border-collapse:separate;border:0;background:none;width:100%}
+.admonitionblock>table td.icon{text-align:center;width:80px}
+.admonitionblock>table td.icon img{max-width:none}
+.admonitionblock>table td.icon .title{font-weight:bold;font-family:"Open Sans","DejaVu Sans",sans-serif;text-transform:uppercase}
+.admonitionblock>table td.content{padding-left:1.125em;padding-right:1.25em;border-left:1px solid #dddddf;color:rgba(0,0,0,.6)}
+.admonitionblock>table td.content>:last-child>:last-child{margin-bottom:0}
+.exampleblock>.content{border-style:solid;border-width:1px;border-color:#e6e6e6;margin-bottom:1.25em;padding:1.25em;background:#fff;-webkit-border-radius:4px;border-radius:4px}
+.exampleblock>.content>:first-child{margin-top:0}
+.exampleblock>.content>:last-child{margin-bottom:0}
+.sidebarblock{border-style:solid;border-width:1px;border-color:#dbdbd6;margin-bottom:1.25em;padding:1.25em;background:#f3f3f2;-webkit-border-radius:4px;border-radius:4px}
+.sidebarblock>:first-child{margin-top:0}
+.sidebarblock>:last-child{margin-bottom:0}
+.sidebarblock>.content>.title{color:#7a2518;margin-top:0;text-align:center}
+.exampleblock>.content>:last-child>:last-child,.exampleblock>.content .olist>ol>li:last-child>:last-child,.exampleblock>.content .ulist>ul>li:last-child>:last-child,.exampleblock>.content .qlist>ol>li:last-child>:last-child,.sidebarblock>.content>:last-child>:last-child,.sidebarblock>.content .olist>ol>li:last-child>:last-child,.sidebarblock>.content .ulist>ul>li:last-child>:last-child,.sidebarblock>.content .qlist>ol>li:last-child>:last-child{margin-bottom:0}
+.literalblock pre,.listingblock>.content>pre{-webkit-border-radius:4px;border-radius:4px;word-wrap:break-word;overflow-x:auto;padding:1em;font-size:.8125em}
+@media screen and (min-width:768px){.literalblock pre,.listingblock>.content>pre{font-size:.90625em}}
+@media screen and (min-width:1280px){.literalblock pre,.listingblock>.content>pre{font-size:1em}}
+.literalblock pre,.listingblock>.content>pre:not(.highlight),.listingblock>.content>pre[class="highlight"],.listingblock>.content>pre[class^="highlight "]{background:#f7f7f8}
+.literalblock.output pre{color:#f7f7f8;background:rgba(0,0,0,.9)}
+.listingblock>.content{position:relative}
+.listingblock code[data-lang]::before{display:none;content:attr(data-lang);position:absolute;font-size:.75em;top:.425rem;right:.5rem;line-height:1;text-transform:uppercase;color:inherit;opacity:.5}
+.listingblock:hover code[data-lang]::before{display:block}
+.listingblock.terminal pre .command::before{content:attr(data-prompt);padding-right:.5em;color:inherit;opacity:.5}
+.listingblock.terminal pre .command:not([data-prompt])::before{content:"$"}
+.listingblock pre.highlightjs{padding:0}
+.listingblock pre.highlightjs>code{padding:1em;-webkit-border-radius:4px;border-radius:4px}
+.listingblock pre.prettyprint{border-width:0}
+.prettyprint{background:#f7f7f8}
+pre.prettyprint .linenums{line-height:1.45;margin-left:2em}
+pre.prettyprint li{background:none;list-style-type:inherit;padding-left:0}
+pre.prettyprint li code[data-lang]::before{opacity:1}
+pre.prettyprint li:not(:first-child) code[data-lang]::before{display:none}
+table.linenotable{border-collapse:separate;border:0;margin-bottom:0;background:none}
+table.linenotable td[class]{color:inherit;vertical-align:top;padding:0;line-height:inherit;white-space:normal}
+table.linenotable td.code{padding-left:.75em}
+table.linenotable td.linenos{border-right:1px solid currentColor;opacity:.35;padding-right:.5em}
+pre.pygments .lineno{border-right:1px solid currentColor;opacity:.35;display:inline-block;margin-right:.75em}
+pre.pygments .lineno::before{content:"";margin-right:-.125em}
+.quoteblock{margin:0 1em 1.25em 1.5em;display:table}
+.quoteblock:not(.excerpt)>.title{margin-left:-1.5em;margin-bottom:.75em}
+.quoteblock blockquote,.quoteblock p{color:rgba(0,0,0,.85);font-size:1.15rem;line-height:1.75;word-spacing:.1em;letter-spacing:0;font-style:italic;text-align:justify}
+.quoteblock blockquote{margin:0;padding:0;border:0}
+.quoteblock blockquote::before{content:"\201c";float:left;font-size:2.75em;font-weight:bold;line-height:.6em;margin-left:-.6em;color:#7a2518;text-shadow:0 1px 2px rgba(0,0,0,.1)}
+.quoteblock blockquote>.paragraph:last-child p{margin-bottom:0}
+.quoteblock .attribution{margin-top:.75em;margin-right:.5ex;text-align:right}
+.verseblock{margin:0 1em 1.25em}
+.verseblock pre{font-family:"Open Sans","DejaVu Sans",sans;font-size:1.15rem;color:rgba(0,0,0,.85);font-weight:300;text-rendering:optimizeLegibility}
+.verseblock pre strong{font-weight:400}
+.verseblock .attribution{margin-top:1.25rem;margin-left:.5ex}
+.quoteblock .attribution,.verseblock .attribution{font-size:.9375em;line-height:1.45;font-style:italic}
+.quoteblock .attribution br,.verseblock .attribution br{display:none}
+.quoteblock .attribution cite,.verseblock .attribution cite{display:block;letter-spacing:-.025em;color:rgba(0,0,0,.6)}
+.quoteblock.abstract blockquote::before,.quoteblock.excerpt blockquote::before,.quoteblock .quoteblock blockquote::before{display:none}
+.quoteblock.abstract blockquote,.quoteblock.abstract p,.quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{line-height:1.6;word-spacing:0}
+.quoteblock.abstract{margin:0 1em 1.25em;display:block}
+.quoteblock.abstract>.title{margin:0 0 .375em;font-size:1.15em;text-align:center}
+.quoteblock.excerpt>blockquote,.quoteblock .quoteblock{padding:0 0 .25em 1em;border-left:.25em solid #dddddf}
+.quoteblock.excerpt,.quoteblock .quoteblock{margin-left:0}
+.quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{color:inherit;font-size:1.0625rem}
+.quoteblock.excerpt .attribution,.quoteblock .quoteblock .attribution{color:inherit;text-align:left;margin-right:0}
+table.tableblock{max-width:100%;border-collapse:separate}
+p.tableblock:last-child{margin-bottom:0}
+td.tableblock>.content>:last-child{margin-bottom:-1.25em}
+td.tableblock>.content>:last-child.sidebarblock{margin-bottom:0}
+table.tableblock,th.tableblock,td.tableblock{border:0 solid #dedede}
+table.grid-all>thead>tr>.tableblock,table.grid-all>tbody>tr>.tableblock{border-width:0 1px 1px 0}
+table.grid-all>tfoot>tr>.tableblock{border-width:1px 1px 0 0}
+table.grid-cols>*>tr>.tableblock{border-width:0 1px 0 0}
+table.grid-rows>thead>tr>.tableblock,table.grid-rows>tbody>tr>.tableblock{border-width:0 0 1px}
+table.grid-rows>tfoot>tr>.tableblock{border-width:1px 0 0}
+table.grid-all>*>tr>.tableblock:last-child,table.grid-cols>*>tr>.tableblock:last-child{border-right-width:0}
+table.grid-all>tbody>tr:last-child>.tableblock,table.grid-all>thead:last-child>tr>.tableblock,table.grid-rows>tbody>tr:last-child>.tableblock,table.grid-rows>thead:last-child>tr>.tableblock{border-bottom-width:0}
+table.frame-all{border-width:1px}
+table.frame-sides{border-width:0 1px}
+table.frame-topbot,table.frame-ends{border-width:1px 0}
+table.stripes-all tr,table.stripes-odd tr:nth-of-type(odd),table.stripes-even tr:nth-of-type(even),table.stripes-hover tr:hover{background:#f8f8f7}
+th.halign-left,td.halign-left{text-align:left}
+th.halign-right,td.halign-right{text-align:right}
+th.halign-center,td.halign-center{text-align:center}
+th.valign-top,td.valign-top{vertical-align:top}
+th.valign-bottom,td.valign-bottom{vertical-align:bottom}
+th.valign-middle,td.valign-middle{vertical-align:middle}
+table thead th,table tfoot th{font-weight:bold}
+tbody tr th{display:table-cell;line-height:1.6;background:#f7f8f7}
+tbody tr th,tbody tr th p,tfoot tr th,tfoot tr th p{color:rgba(0,0,0,.8);font-weight:bold}
+p.tableblock>code:only-child{background:none;padding:0}
+p.tableblock{font-size:1em}
+ol{margin-left:1.75em}
+ul li ol{margin-left:1.5em}
+dl dd{margin-left:1.125em}
+dl dd:last-child,dl dd:last-child>:last-child{margin-bottom:0}
+ol>li p,ul>li p,ul dd,ol dd,.olist .olist,.ulist .ulist,.ulist .olist,.olist .ulist{margin-bottom:.625em}
+ul.checklist,ul.none,ol.none,ul.no-bullet,ol.no-bullet,ol.unnumbered,ul.unstyled,ol.unstyled{list-style-type:none}
+ul.no-bullet,ol.no-bullet,ol.unnumbered{margin-left:.625em}
+ul.unstyled,ol.unstyled{margin-left:0}
+ul.checklist{margin-left:.625em}
+ul.checklist li>p:first-child>.fa-square-o:first-child,ul.checklist li>p:first-child>.fa-check-square-o:first-child{width:1.25em;font-size:.8em;position:relative;bottom:.125em}
+ul.checklist li>p:first-child>input[type="checkbox"]:first-child{margin-right:.25em}
+ul.inline{display:-ms-flexbox;display:-webkit-box;display:flex;-ms-flex-flow:row wrap;-webkit-flex-flow:row wrap;flex-flow:row wrap;list-style:none;margin:0 0 .625em -1.25em}
+ul.inline>li{margin-left:1.25em}
+.unstyled dl dt{font-weight:400;font-style:normal}
+ol.arabic{list-style-type:decimal}
+ol.decimal{list-style-type:decimal-leading-zero}
+ol.loweralpha{list-style-type:lower-alpha}
+ol.upperalpha{list-style-type:upper-alpha}
+ol.lowerroman{list-style-type:lower-roman}
+ol.upperroman{list-style-type:upper-roman}
+ol.lowergreek{list-style-type:lower-greek}
+.hdlist>table,.colist>table{border:0;background:none}
+.hdlist>table>tbody>tr,.colist>table>tbody>tr{background:none}
+td.hdlist1,td.hdlist2{vertical-align:top;padding:0 .625em}
+td.hdlist1{font-weight:bold;padding-bottom:1.25em}
+.literalblock+.colist,.listingblock+.colist{margin-top:-.5em}
+.colist td:not([class]):first-child{padding:.4em .75em 0;line-height:1;vertical-align:top}
+.colist td:not([class]):first-child img{max-width:none}
+.colist td:not([class]):last-child{padding:.25em 0}
+.thumb,.th{line-height:0;display:inline-block;border:solid 4px #fff;-webkit-box-shadow:0 0 0 1px #ddd;box-shadow:0 0 0 1px #ddd}
+.imageblock.left{margin:.25em .625em 1.25em 0}
+.imageblock.right{margin:.25em 0 1.25em .625em}
+.imageblock>.title{margin-bottom:0}
+.imageblock.thumb,.imageblock.th{border-width:6px}
+.imageblock.thumb>.title,.imageblock.th>.title{padding:0 .125em}
+.image.left,.image.right{margin-top:.25em;margin-bottom:.25em;display:inline-block;line-height:0}
+.image.left{margin-right:.625em}
+.image.right{margin-left:.625em}
+a.image{text-decoration:none;display:inline-block}
+a.image object{pointer-events:none}
+sup.footnote,sup.footnoteref{font-size:.875em;position:static;vertical-align:super}
+sup.footnote a,sup.footnoteref a{text-decoration:none}
+sup.footnote a:active,sup.footnoteref a:active{text-decoration:underline}
+#footnotes{padding-top:.75em;padding-bottom:.75em;margin-bottom:.625em}
+#footnotes hr{width:20%;min-width:6.25em;margin:-.25em 0 .75em;border-width:1px 0 0}
+#footnotes .footnote{padding:0 .375em 0 .225em;line-height:1.3334;font-size:.875em;margin-left:1.2em;margin-bottom:.2em}
+#footnotes .footnote a:first-of-type{font-weight:bold;text-decoration:none;margin-left:-1.05em}
+#footnotes .footnote:last-of-type{margin-bottom:0}
+#content #footnotes{margin-top:-.625em;margin-bottom:0;padding:.75em 0}
+.gist .file-data>table{border:0;background:#fff;width:100%;margin-bottom:0}
+.gist .file-data>table td.line-data{width:99%}
+div.unbreakable{page-break-inside:avoid}
+.big{font-size:larger}
+.small{font-size:smaller}
+.underline{text-decoration:underline}
+.overline{text-decoration:overline}
+.line-through{text-decoration:line-through}
+.aqua{color:#00bfbf}
+.aqua-background{background:#00fafa}
+.black{color:#000}
+.black-background{background:#000}
+.blue{color:#0000bf}
+.blue-background{background:#0000fa}
+.fuchsia{color:#bf00bf}
+.fuchsia-background{background:#fa00fa}
+.gray{color:#606060}
+.gray-background{background:#7d7d7d}
+.green{color:#006000}
+.green-background{background:#007d00}
+.lime{color:#00bf00}
+.lime-background{background:#00fa00}
+.maroon{color:#600000}
+.maroon-background{background:#7d0000}
+.navy{color:#000060}
+.navy-background{background:#00007d}
+.olive{color:#606000}
+.olive-background{background:#7d7d00}
+.purple{color:#600060}
+.purple-background{background:#7d007d}
+.red{color:#bf0000}
+.red-background{background:#fa0000}
+.silver{color:#909090}
+.silver-background{background:#bcbcbc}
+.teal{color:#006060}
+.teal-background{background:#007d7d}
+.white{color:#bfbfbf}
+.white-background{background:#fafafa}
+.yellow{color:#bfbf00}
+.yellow-background{background:#fafa00}
+span.icon>.fa{cursor:default}
+a span.icon>.fa{cursor:inherit}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note::before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip::before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning::before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution::before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important::before{content:"\f06a";color:#bf0000}
+.conum[data-value]{display:inline-block;color:#fff!important;background:rgba(0,0,0,.8);-webkit-border-radius:100px;border-radius:100px;text-align:center;font-size:.75em;width:1.67em;height:1.67em;line-height:1.67em;font-family:"Open Sans","DejaVu Sans",sans-serif;font-style:normal;font-weight:bold}
+.conum[data-value] *{color:#fff!important}
+.conum[data-value]+b{display:none}
+.conum[data-value]::after{content:attr(data-value)}
+pre .conum[data-value]{position:relative;top:-.125em}
+b.conum *{color:inherit!important}
+.conum:not([data-value]):empty{display:none}
+dt,th.tableblock,td.content,div.footnote{text-rendering:optimizeLegibility}
+h1,h2,p,td.content,span.alt{letter-spacing:-.01em}
+p strong,td.content strong,div.footnote strong{letter-spacing:-.005em}
+p,blockquote,dt,td.content,span.alt{font-size:1.0625rem}
+p{margin-bottom:1.25rem}
+.sidebarblock p,.sidebarblock dt,.sidebarblock td.content,p.tableblock{font-size:1em}
+.exampleblock>.content{background:#fffef7;border-color:#e0e0dc;-webkit-box-shadow:0 1px 4px #e0e0dc;box-shadow:0 1px 4px #e0e0dc}
+.print-only{display:none!important}
+@page{margin:1.25cm .75cm}
+@media print{*{-webkit-box-shadow:none!important;box-shadow:none!important;text-shadow:none!important}
+html{font-size:80%}
+a{color:inherit!important;text-decoration:underline!important}
+a.bare,a[href^="#"],a[href^="mailto:"]{text-decoration:none!important}
+a[href^="http:"]:not(.bare)::after,a[href^="https:"]:not(.bare)::after{content:"(" attr(href) ")";display:inline-block;font-size:.875em;padding-left:.25em}
+abbr[title]::after{content:" (" attr(title) ")"}
+pre,blockquote,tr,img,object,svg{page-break-inside:avoid}
+thead{display:table-header-group}
+svg{max-width:100%}
+p,blockquote,dt,td.content{font-size:1em;orphans:3;widows:3}
+h2,h3,#toctitle,.sidebarblock>.content>.title{page-break-after:avoid}
+#toc,.sidebarblock,.exampleblock>.content{background:none!important}
+#toc{border-bottom:1px solid #dddddf!important;padding-bottom:0!important}
+body.book #header{text-align:center}
+body.book #header>h1:first-child{border:0!important;margin:2.5em 0 1em}
+body.book #header .details{border:0!important;display:block;padding:0!important}
+body.book #header .details span:first-child{margin-left:0!important}
+body.book #header .details br{display:block}
+body.book #header .details br+span::before{content:none!important}
+body.book #toc{border:0!important;text-align:left!important;padding:0!important;margin:0!important}
+body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-break-before:always}
+.listingblock code[data-lang]::before{display:block}
+#footer{padding:0 .9375em}
+.hide-on-print{display:none!important}
+.print-only{display:block!important}
+.hide-for-print{display:none!important}
+.show-for-print{display:inherit!important}}
+@media print,amzn-kf8{#header>h1:first-child{margin-top:1.25rem}
+.sect1{padding:0!important}
+.sect1+.sect1{border:0}
+#footer{background:none}
+#footer-text{color:rgba(0,0,0,.6);font-size:.9em}}
+@media amzn-kf8{#header,#content,#footnotes,#footer{padding:0}}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body class="article toc2 toc-left">
+<div id="header">
+<h1>Sendinblue, Dokku and deployment</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_netcup_and_sendinblue">NetCup and Sendinblue</a>
+<ul class="sectlevel2">
+<li><a href="#_sendinblue">Sendinblue</a></li>
+<li><a href="#_edit_your_dns_zone_at_netcup">Edit your DNS zone at NetCup</a></li>
+<li><a href="#_your_root_server">Your Root Server</a></li>
+<li><a href="#_connect_to_your_vps_via_ssh">Connect to Your VPS via SSH</a></li>
+<li><a href="#_configuring_your_server">Configuring your server</a></li>
+<li><a href="#_securing_your_server">Securing your server</a></li>
+<li><a href="#_dokku">Dokku</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you think that your application will have a considerable amount of traffic, my personal advise is to deploy your application not to Heroku, as suggested by the Ruby on Rails Tutorial, but to a different hosting provider, which offers affordable plans. You should consider that Heroku in fact is expensive as you <a href="https://www.speedshop.co/2015/07/29/scaling-ruby-apps-to-1000-rpm.html">scale</a>. The free plan offers only 1 web and 1 worker dynos. <em>Adding more web dynos allows you to handle more concurrent HTTP requests, and therefore higher volumes of traffic</em> (See <a href="https://devcenter.heroku.com/articles/dynos#scalability">at Heroku</a>). Worker dynos are important too. "<em>Worker dynos can be of any process type declared in your Procfile, other than “web”. Worker dynos are typically used for background jobs, queueing systems, and timed jobs</em>". Especially background processes are a fundamental part of web applications. For instance, a background process allows to delete automatically all outdated microposts, and free space in your drive.</p>
+</div>
+<div class="paragraph">
+<p>There are many hosting providers. Among them, two of the most popular choices are <a href="https://www.digitalocean.com/">DigitalOcean</a> and <a href="https://www.linode.com/">Linode</a>. Both offer excellent documentation. Another popular choice is <a href="https://www.ovh.com/">OVH</a>. Otherwise you can look for web hosting providers using a search engine or dedicated web sites like <a href="https://hostadvice.com/">HostAdvice</a>. Also, other places I would recommend are <a href="http://www.webhostingtalk.com">WebHostingTalk</a> and <a href="https://www.lowendtalk.com">LowEndTalk</a>.</p>
+</div>
+<div class="paragraph">
+<p>What I would suggest to consider in choosing a hosting provider are the traffic flatrate, the availabiliy of DDoS protection, the amount of storage space provided and the technical support.</p>
+</div>
+<div class="paragraph">
+<p>After a long research, for my web application I chose a root server at <a href="https://www.netcup.eu">NetCup</a> because of the fair prices and interesting solutions. A basic root server at present offers 8 GB DDR4 RAM, 2 dedicated cores and 160 GB SSD. They also have a very useful forum where you can find solutions to your questions offered by a very responsive community.</p>
+</div>
+<div class="paragraph">
+<p>I also purchased my domain at NetCup, because "customers who purchase a web hosting package, a root server system or a managed root server/managed dedicated server from us can add additional domains to their order at particularly attractive rates".</p>
+</div>
+<div class="paragraph">
+<p>"As an accredited registrar, netcup can register .eu domains directly at the source and offer first-class support for .eu domain queries".</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_netcup_and_sendinblue"><a class="anchor" href="#_netcup_and_sendinblue"></a>NetCup and Sendinblue</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_sendinblue"><a class="anchor" href="#_sendinblue"></a>Sendinblue</h3>
+<div class="paragraph">
+<p>Michael Hartl&#8217;s Ruby on Rails Tutorial suggests to use <a href="https://sendgrid.com/">SendGrid</a> for emails in production, which is available as an add-on at Heroku for verified accounts. I would instead suggest to use <a href="https://sendinblue.com/">Sendinblue</a> because, comparing their free plans, Sendinblue offers 300 emails per day against 100 emails per day offered by SendGrid.</p>
+</div>
+<div class="paragraph">
+<p>Fill out the SMTP settings for your production environment:</p>
+</div>
+<div class="listingblock">
+<div class="title">config/environments/production.rb</div>
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="ruby" class="language-ruby hljs">Rails.application.configure do
+	...
+  config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.delivery_method = :smtp
+  host = 'fireworks.io'
+  config.action_mailer.default_url_options = { host: host }
+  ActionMailer::Base.smtp_settings = {
+    :address        =&gt; 'smtp-relay.sendinblue.com',
+    :port           =&gt; '587',
+    :authentication =&gt; :plain,
+    :user_name      =&gt; ENV['SENDINBLUE_USERNAME'],
+    :password       =&gt; ENV['SENDINBLUE_PASSWORD'],
+    :domain         =&gt; 'fireworks.io',
+    :enable_starttls_auto =&gt; true
+  }
+	...
+end</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Commit and push your changes:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ git commit -am "Configure Sendinblue"
+$ git push</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Create an account at <a href="https://www.sendinblue.com/">Sendinblue</a>.
+Wait for your sendinblue account to be validated and activated.</p>
+</div>
+<div class="paragraph">
+<p>In case the account results not yet activated, send an email to '<a href="mailto:contact@sendinblue.com">contact@sendinblue.com</a>' requesting your account activation. You have to specify that you want to use your account only for transactional email.</p>
+</div>
+<div class="paragraph">
+<p>After that, log in to your account then go to your <a href="https://my.sendinblue.com/dashboard">dashboard</a>.<br>
+Then again:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Click on your name in the upper right corner</p>
+</li>
+<li>
+<p>Click on 'Senders &amp; IP'</p>
+</li>
+<li>
+<p>Go to the 'Domains' tab</p>
+</li>
+<li>
+<p>Click on 'Add new domain' and write 'fireworks.io' in the text field</p>
+</li>
+<li>
+<p>Check the box 'I would like to use this domain name to digitally sign my emails'</p>
+</li>
+<li>
+<p>Click on 'Save'</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>After clicking 'Save', DNS records appear for the new domain.
+These records have still to be verified and the domain authenticated.
+Leave the DNS records window open.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_edit_your_dns_zone_at_netcup"><a class="anchor" href="#_edit_your_dns_zone_at_netcup"></a>Edit your DNS zone at NetCup</h3>
+<div class="paragraph">
+<p>Add the sendinblue DNS records to the NetCup DNS zone.
+You can access to your DNS zone file by visiting the <a href="https://www.customercontrolpanel.de">customer control panel</a>, going to the Domains section, clicking on the magnifying glass and then on the DNS section. Your DNS zone should contain the following entries:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Host</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Type</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Destination</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">*</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AAAA</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">IPV6 address</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">*</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">IPV4 address</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">@</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AAAA</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">IPV6 address</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">@</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">IPV4 address</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">www</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CNAME</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">@</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">@</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TXT</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>sendinblue SPF record <i class="conum" data-value="1"></i><b>(1)</b></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">@</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TXT</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>sendinblue TXT record <i class="conum" data-value="2"></i><b>(2)</b></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">mail._domainkey</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TXT</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>Sendinblue DKIM record <i class="conum" data-value="3"></i><b>(3)</b></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">_dmarc</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">TXT</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p>sendinblue DMARC record <i class="conum" data-value="4"></i><b>(4)</b></p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Here goes the Sendinblue SPF record for <code>fireworks.io</code>, represented by the relative record name <code>@</code> in the host column.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Here goes the Sendinblue TXT record for <code>fireworks.io</code>, represented by the relative record name <code>@</code> in the host column.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Here goes the Sendinblue DKIM record for <code>mail._domainkey.yandex.com</code>. In the cell of the host column you have to enter only <code>mail._domainkey</code>. See <a href="https://forum.netcup.de/anwendung/ccp-customer-control-panel/12220-how-to-add-dkim-spf-and-dmark-records-to-dns-zone/">at NetCup</a></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>Here goes the Sendinblue DMARC record for <code>_dmarc.yandex.com</code>. In the cell of the host column you have to enter only <code>_dmarc</code></td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Close the DNS records window at Sendinblue by clicking the 'x' in the upper right corner. Wait 48 hours (2 days) for DNS changes to fully propagate.</p>
+</div>
+<div class="paragraph">
+<p>Go back to the Sendinblue 'Senders &amp; IPs - Domains' section.<br>
+Click on 'AUTENTICATE THIS DOMAIN'<br>
+Check that the 4 records are configured ('configured' should be written on the right hand side of each record).<br>
+Click on 'I&#8217;m Done'</p>
+</div>
+<div class="paragraph">
+<p>Now that the domain is authenticated, you will not need to verify your senders (but you need to add them).<br>
+See: <a href="https://help.sendinblue.com/hc/en-us/articles/115000185270-What-is-a-verified-domain-on-SendinBlue-" class="bare">https://help.sendinblue.com/hc/en-us/articles/115000185270-What-is-a-verified-domain-on-SendinBlue-</a><br>
+See: <a href="https://stackoverflow.com/questions/59703029/rails-transactional-email-and-sender-validation" class="bare">https://stackoverflow.com/questions/59703029/rails-transactional-email-and-sender-validation</a></p>
+</div>
+<div class="paragraph">
+<p>Create a sender going to the 'Senders &amp; IPs - Senders' section.<br>
+Click on 'ADD A NEW SENDER' and add the following entries:</p>
+</div>
+<div class="paragraph">
+<p>From name: fireworks<br>
+From email: <a href="mailto:noreply@fireworks.io">noreply@fireworks.io</a></p>
+</div>
+<div class="paragraph">
+<p>Sender added successfully</p>
+</div>
+<div class="paragraph">
+<p>Check that the sender at Sendinblue corresponds to the sender in your application:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="ruby" class="language-ruby hljs">app/mailers/application_mailer.rb
+
+class ApplicationMailer &lt; ActionMailer::Base
+  default from: "noreply@fireworks.io"
+  layout 'mailer'
+end</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_your_root_server"><a class="anchor" href="#_your_root_server"></a>Your Root Server</h3>
+<div class="paragraph">
+<p>From the Server Control Panel:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Select Ubuntu 18.04 or 20.04 minimal image from the list of available OS under <code>Media</code> -&#8594; <code>Images</code>;</p>
+</li>
+<li>
+<p>Wait the necessary time for the deployment to finish.</p>
+</li>
+<li>
+<p>After finished the installation of Ubuntu, a root password is generated. Jot it down.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_connect_to_your_vps_via_ssh"><a class="anchor" href="#_connect_to_your_vps_via_ssh"></a>Connect to Your VPS via SSH</h3>
+<div class="paragraph">
+<p>Find your VPS IP address from the Server Control Panel.
+From a terminal of your computer, log into your server via SSH:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ ssh root@ip_address</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If this is the first time connecting to your root server, you’ll see the authenticity warning.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Type 'yes' and press 'Enter' to continue connecting.</p>
+</li>
+<li>
+<p>Enter the password generated for the root user</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_configuring_your_server"><a class="anchor" href="#_configuring_your_server"></a>Configuring your server</h3>
+<div class="sect3">
+<h4 id="_add_swap_file"><a class="anchor" href="#_add_swap_file"></a>Add Swap file</h4>
+<div class="paragraph">
+<p>See the well made <a href="https://www.digitalocean.com/community/tutorials/how-to-add-swap-space-on-ubuntu-18-04">tutorial</a> at Digitalocean.</p>
+</div>
+<div class="paragraph">
+<p>You can see if the system has any configured swap by typing:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo swapon --show</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you don’t get back any output, this means your system does not have swap space available currently. You can verify that there is no active swap using the free utility:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ free -h</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Before we create our swap file, we’ll check our current disk usage to make sure we have enough space. Do this by entering:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ df -h</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now that we know our available hard drive space, we can create a swap file on our filesystem.
+We will allocate a file of the swap size that we want called swapfile in our root (/) directory.
+The best way of creating a swap file is with the fallocate program. This command instantly creates a file of the specified size.</p>
+</div>
+<div class="paragraph">
+<p>Since the server at NetCup has 8G of RAM, we will create a 8G file:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo fallocate -l 8G /swapfile</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can verify that the correct amount of space was reserved by typing:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ ls -lh /swapfile</code></pre>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_enabling_the_swap_file"><a class="anchor" href="#_enabling_the_swap_file"></a>Enabling the Swap File</h5>
+<div class="paragraph">
+<p>Now that we have a file of the correct size available, we need to actually turn this into swap space.
+First, we need to lock down the permissions of the file so that only the users with root privileges can read the contents.
+This prevents normal users from being able to access the file, which would have significant security implications.</p>
+</div>
+<div class="paragraph">
+<p>Make the file only accessible to root by typing:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo chmod 600 /swapfile</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Verify the permissions change by typing:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ ls -lh /swapfile</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can now mark the file as swap space by typing:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo mkswap /swapfile</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>After marking the file, we can enable the swap file, allowing our system to start utilizing it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo swapon /swapfile</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Verify that the swap is available by typing:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo swapon --show</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can check the output of the free utility again to corroborate our findings:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ free -h</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Our swap has been set up successfully and our operating system will begin to use it as necessary.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_making_the_swap_file_permanent"><a class="anchor" href="#_making_the_swap_file_permanent"></a>Making the Swap File Permanent</h5>
+<div class="paragraph">
+<p>Our recent changes have enabled the swap file for the current session.
+However, if we reboot, the server will not retain the swap settings automatically.
+We can change this by adding the swap file to our /etc/fstab file.</p>
+</div>
+<div class="paragraph">
+<p>Back up the /etc/fstab file in case anything goes wrong:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo cp /etc/fstab /etc/fstab.bak</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Add the swap file information to the end of your /etc/fstab file by typing:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab</code></pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_tuning_your_swap_settings"><a class="anchor" href="#_tuning_your_swap_settings"></a>Tuning your Swap Settings</h5>
+<div class="paragraph">
+<p>There are a few options that you can configure that will have an impact on your system’s performance when dealing with swap.</p>
+</div>
+<div class="sect5">
+<h6 id="_adjusting_the_swappiness_property"><a class="anchor" href="#_adjusting_the_swappiness_property"></a>Adjusting the Swappiness Property</h6>
+<div class="paragraph">
+<p>The swappiness parameter configures how often your system swaps data out of RAM to the swap space.
+This is a value between 0 and 100 that represents a percentage.
+With values close to zero, the kernel will not swap data to the disk unless absolutely necessary.
+Remember, interactions with the swap file are “expensive” in that they take a lot longer than interactions with RAM and they can cause a significant reduction in performance.
+Telling the system not to rely on the swap much will generally make your system faster.</p>
+</div>
+<div class="paragraph">
+<p>We can see the current swappiness value by typing:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ cat /proc/sys/vm/swappiness</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For a Desktop, a swappiness setting of 60 is not a bad value.<br>
+For a server, you might want to move it closer to 0.</p>
+</div>
+<div class="paragraph">
+<p>We can set the swappiness to a different value by using the sysctl command.<br>
+For instance, to set the swappiness to 10, we could type:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo sysctl vm.swappiness=10</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This setting will persist until the next reboot.<br>
+We can set this value automatically at restart by adding the line to our /etc/sysctl.conf file:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo vi /etc/sysctl.conf</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>At the bottom, you can add:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">vm.swappiness=10</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Save and close the file when you are finished.</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_adjusting_the_cache_pressure_setting"><a class="anchor" href="#_adjusting_the_cache_pressure_setting"></a>Adjusting the Cache Pressure Setting</h6>
+<div class="paragraph">
+<p>Another related value that you might want to modify is the vfs_cache_pressure.<br>
+You can see the current value by querying the proc filesystem again:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ cat /proc/sys/vm/vfs_cache_pressure</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We can set this to a more conservative setting like 50 by typing:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo sysctl vm.vfs_cache_pressure=50</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Again, this is only valid for our current session.
+We can change that by adding it to our configuration file like we did with our swappiness setting:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo vi /etc/sysctl.conf</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>At the bottom, add the line that specifies your new value:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">vm.vfs_cache_pressure=50</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Save and close the file when you are finished.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_server_identity"><a class="anchor" href="#_server_identity"></a>Server identity</h4>
+<div class="paragraph">
+<p>First of all install Software Updates:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo apt-get update &amp;&amp; sudo apt-get upgrade</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now it is time to set the hostname: choose whatever name you like, for instance 'gondor'.<br>
+See: <a href="https://linuxize.com/post/how-to-change-hostname-on-ubuntu-18-04/">how to change hostname</a><br>
+Set the hostname of your system:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ hostnamectl set-hostname gondor</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Edit the /etc/hosts file:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ vi /etc/hosts</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">127.0.0.1	    localhost
+127.0.1.1	    gondor.fireworks.io	  fireworks.io	  gondor
+ipv4        	gondor.fireworks.io	  fireworks.io	  gondor
+
+# The following lines are desirable for IPv6 capable hosts
+::1     localhost ip6-localhost ip6-loopback
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+ipv6    gondor.fireworks.io	  fireworks.io	  gondor</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Put your actual ipv4 and ipv6 in their respective places.<br>
+You can find your ipv4 and ipv6 addresses in <code>/etc/netplan/50-cloud-init.yaml</code>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">cat /etc/netplan/50-cloud-init.yaml</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_securing_your_server"><a class="anchor" href="#_securing_your_server"></a>Securing your server</h3>
+<div class="paragraph">
+<p>The following instructions are an excerpt from <a href="https://www.linode.com/docs/security/securing-your-server">Linode&#8217;s documentation</a></p>
+</div>
+<div class="paragraph">
+<p>Open a terminal window with two tabs.<br>
+The first tab is for your local computer, necessary to upload the public key to the VPS server.<br>
+The second tab is for ssh log into the VPS server.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>ssh as root to your server (second tab)</p>
+</li>
+<li>
+<p>check if ufw is enabled with the following command:</p>
+<div class="literalblock">
+<div class="content">
+<pre>$ ufw status</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>if the previous script returned Status: active and a list of ports, ufw is enabled.</pre>
+</div>
+</div>
+</li>
+<li>
+<p>To disable ufw, run the following command:</p>
+<div class="literalblock">
+<div class="content">
+<pre>$ ufw disable</pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>See <a href="http://dokku.viewdocs.io/dokku/getting-started/troubleshooting/">troubleshooting at Dokku</a></p>
+</div>
+<div class="paragraph">
+<p>Check if the unattended-upgrades package is installed:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dpkg -l unattended-upgrades</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If it is not installed, follow instructions at the following links:</p>
+</div>
+<div class="paragraph">
+<p><a href="https://help.ubuntu.com/18.04/serverguide/automatic-updates.html">Ubuntu 18.04</a><br>
+<a href="https://ubuntu.com/server/docs">Other Ubuntu versions</a></p>
+</div>
+<div class="paragraph">
+<p><code>unattended-upgrades</code> log files are in <code>/var/log/unattended-upgrades</code><br>
+Package <code>unattended-upgrades</code> installs a logrotate configuration file in <code>/etc/logrotate.d/unattended-upgrades</code></p>
+</div>
+<div class="sect3">
+<h4 id="_add_a_limited_user_account"><a class="anchor" href="#_add_a_limited_user_account"></a>Add a Limited User Account</h4>
+<div class="paragraph">
+<p>From 'man adduser': 'adduser' and 'addgroup' add users and groups to the system according to command line options and configuration information in <code>/etc/adduser.conf</code>.<br>
+Read <code>/etc/adduser.conf</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ less /etc/adduser.conf</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The process of adding a user with 'adduser' is interactive.<br>
+It asks for: Password, Full Name, Room Number, Work Phone, Home Phone, Other</p>
+</div>
+<div class="paragraph">
+<p>Type "Faramir captain of the White Tower" when asked for full name. Leave blank the others.<br>
+Choose a strong password.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ adduser faramir</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Add the user to the sudo group so you’ll have administrative privileges:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ adduser faramir sudo</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>After creating your limited user, disconnect from your VPS:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ exit</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Log back in as your new user:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ ssh faramir@server_ip_address</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_harden_ssh_access"><a class="anchor" href="#_harden_ssh_access"></a>Harden SSH Access</h4>
+<div class="paragraph">
+<p>From your local shell (first tab), upload the public key to your VPS:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ ssh-copy-id faramir@server_ip_address</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The server would ask you for faramir&#8217;s password at the NetCup server.<br>
+See <a href="https://www.digitalocean.com/community/tutorials/how-to-set-up-ssh-keys-on-ubuntu-1804">at DigitalOcean</a></p>
+</div>
+<div class="paragraph">
+<p>Check the permissions for the ssh directory and content (second tab):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ ls -l ~/.ssh</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Permissions should be as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">drwx------ faramir faramir . +
+drwxr-xr-x faramir faramir .. +
+-rw------- faramir faramir authorized_keys</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In case permissions are different, set permissions for the public key directory and the key file itself:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo chmod 700 -R ~/.ssh &amp;&amp; sudo chmod 600 ~/.ssh/authorized_keys
+$ ls -l ~/.ssh</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now exit and log back into your Linode.
+If you specified a passphrase for your private key, you’ll need to enter it.
+Check that user faramir can now access via ssh with key-pair:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ exit
+$ ssh faramir@server_ip_address</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>NOTE1: if there is a passphrase for the ssh key, it will be asked during ssh login</p>
+</div>
+<div class="paragraph">
+<p>NOTE2: in case you forgot the passphrase, you need to generate a new ssh key pair
+			 See: <a href="https://www.linode.com/docs/security/securing-your-server#create-an-authentication-key-pair" class="bare">https://www.linode.com/docs/security/securing-your-server#create-an-authentication-key-pair</a></p>
+</div>
+<div class="paragraph">
+<p>Edit /etc/ssh/sshd_config:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo vi /etc/ssh/sshd_config</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Set for the following directives the suggested values:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">PermitRootLogin no
+PubkeyAuthentication yes
+PasswordAuthentication no
+Banner none</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>then the following directives should be added:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">AllowTcpForwarding no
+GatewayPorts no</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Make sshd listen on only one internet protocol looking for the 'AddressFamily' directive and setting it to 'inet':</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">AddressFamily inet</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Save and exit.</p>
+</div>
+<div class="paragraph">
+<p>Restart the SSH service to load the new configuration using one of the two commands below:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo systemctl restart ssh</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_iptables"><a class="anchor" href="#_iptables"></a>IPTABLES</h4>
+<div class="paragraph">
+<p>See <a href="https://www.linode.com/docs/security/firewalls/control-network-traffic-with-iptables#basic-iptables-rulesets-for-ipv4-and-ipv6">IPTABLES documentation at Linode</a></p>
+</div>
+<div class="paragraph">
+<p>Since I am not very familiar with IPTABLES I searched the Internet for basic rulesets good for a web server. At Linode I found interesting documentation, so, in case you are not knowledgeable about configuring iptables, I would suggest to use their suggested basic rulesets included in the above link.</p>
+</div>
+<div class="paragraph">
+<p>Copy the basic iptables rulesets for IPv4 and IPv6 in the suggested locations:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo vi /tmp/v4</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Copy &amp; paste, write and quit</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo vi /tmp/v6</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Copy &amp; paste, write and quit</p>
+</div>
+<div class="paragraph">
+<p>Import the rulesets into immediate use:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo iptables-restore &lt; /tmp/v4
+$ sudo ip6tables-restore &lt; /tmp/v6</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Check whether iptables-persistent is already installed:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dpkg -l iptables-persistent</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If dpkg returns that there are no matching packages, you will need to install the iptables-persistent package:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo apt-get install iptables-persistent</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>See <a href="https://www.linode.com/docs/security/firewalls/control-network-traffic-with-iptables/#introduction-to-iptables-persistent">at Linode</a><br>
+During the installation, you will be prompted twice.<br>
+The first prompt is asking if you would like to save your current IPv4 rules.<br>
+The second prompt is to save the rules configured for IPv6.<br>
+After the install is complete, you should see the iptables’s subdirectory.<br>
+Run the <code>ls /etc/iptables</code> command to verify that your output resembles the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ ls /etc/iptables
+rules.v4  rules.v6</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Use the <code>rules.v4</code> or <code>rules.v6</code> files to add, delete or edit the rules for your server.
+The syntax for altering table rules is the same as from the iptables command line.</p>
+</div>
+<div class="paragraph">
+<p>In case you make any change to the <code>rules.v4</code> and <code>rules.v6</code> files, to enforce the iptables rules and ensure that they persist after reboot run <code>dpkg-reconfigure</code> and respond Yes when prompted:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dpkg-reconfigure iptables-persistent</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_postfix"><a class="anchor" href="#_postfix"></a>Postfix</h4>
+<div class="paragraph">
+<p>Postfix is a Mail Transfer Agent (MTA) that can act as an SMTP server or client to send or receive email.<br>
+There are many reasons why you would want to configure Postfix to send email using Google Apps and Gmail.<br>
+One reason is to avoid getting your mail flagged as spam if your current server’s IP has been added to a blacklist.<br>
+You will use Postfix to send Ossec email alerts from your server to your account Google. Thus you should have or create a Google accounts for your application, say <a href="mailto:fireworks_app@google.com">fireworks_app@google.com</a>, and turn on the <a href="https://myaccount.google.com/lesssecureapps?pli=1">less secure app access</a>.</p>
+</div>
+<div class="paragraph">
+<p>Let’s update the package database first:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo apt-get update &amp;&amp; sudo apt-get upgrade</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Install mailutils, which will automatically install Postfix.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo apt install -y mailutils</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>During the Postfix installation, a prompt will appear asking for your General type of mail configuration.<br>
+Select 'Internet Site'.</p>
+</div>
+<div class="paragraph">
+<p>Click Enter and then Enter the fully qualified name of your domain: gondor.fireworks.io</p>
+</div>
+<div class="paragraph">
+<p>Note that you can always reconfigure Postfix by running the command below:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dpkg-reconfigure postfix</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once the installation is complete, confirm that the 'myhostname' parameter is configured with your server’s FQDN:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ less /etc/postfix/main.cf
+myhostname = gondor.fireworks.io</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Edit the Postfix configuration file:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo vim /etc/postfix/main.cf</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Change the line that reads inet_interfaces = all to inet_interfaces = loopback-only.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">inet_interfaces = loopback-only</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Find and modify relayhost in /etc/postfix/main.cf to match the following line:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">relayhost = [smtp.gmail.com]:587</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>At the end of the file, add the following parameters to enable authentication:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs"># Enable SASL authentication
+smtp_sasl_auth_enable = yes
+# Disallow methods that allow anonymous authentication
+smtp_sasl_security_options = noanonymous
+# Location of sasl_passwd
+smtp_sasl_password_maps = hash:/etc/postfix/sasl/sasl_passwd
+# Enable STARTTLS encryption
+smtp_tls_security_level = encrypt
+# Location of CA certificates
+smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Write &amp; quit.</p>
+</div>
+<div class="paragraph">
+<p>Add Gmail Username and Password to PostfixPermalink</p>
+</div>
+<div class="paragraph">
+<p>Usernames and passwords are stored in sasl_passwd in the /etc/postfix/sasl/ directory.<br>
+In this section, you’ll add your email login credentials to this file and to Postfix.</p>
+</div>
+<div class="paragraph">
+<p>Open or create the /etc/postfix/sasl/sasl_passwd file and add the SMTP Host, username, and password information:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo vim /etc/postfix/sasl/sasl_passwd
+
+[smtp.gmail.com]:587 fireworks.app@gmail.com:your_gmail_password</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Create the hash db file for Postfix by running the postmap command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo postmap /etc/postfix/sasl/sasl_passwd</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If all went well, you should have a new file named <code>sasl_passwd.db</code> in the <code>/etc/postfix/sasl/</code> directory.</p>
+</div>
+<div class="paragraph">
+<p>Secure Your Postfix Hash Database and Email Password FilesPermalink</p>
+</div>
+<div class="paragraph">
+<p>The <code>/etc/postfix/sasl/sasl_passwd</code> and the <code>/etc/postfix/sasl/sasl_passwd.db</code> files created in the previous steps contain your SMTP credentials in plain text.</p>
+</div>
+<div class="paragraph">
+<p>To restrict access to these files, change their permissions so that only the root user can read from or write to the file. Run the following commands to change the ownership to root and update the permissions for the two files:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo chown root:root /etc/postfix/sasl/sasl_passwd /etc/postfix/sasl/sasl_passwd.db
+$ sudo chmod 0600 /etc/postfix/sasl/sasl_passwd /etc/postfix/sasl/sasl_passwd.db</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Restart Postfix:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo systemctl restart postfix</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Send a Test Mail</p>
+</div>
+<div class="paragraph">
+<p>We’ll now send a test email message.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">echo "Test Email" | mail -s "Email test subject" fireworks.app@gmail.com</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Don’t forget to check your spam folder.</p>
+</div>
+<div class="paragraph">
+<p>If you still haven’t received any mail, check the mail error log.<br>
+See: <a href="https://devanswers.co/configure-postfix-to-use-gmail-smtp-on-ubuntu-16-04-digitalocean-droplet/" class="bare">https://devanswers.co/configure-postfix-to-use-gmail-smtp-on-ubuntu-16-04-digitalocean-droplet/</a></p>
+</div>
+<div class="paragraph">
+<p>Consider that you might be required to turn on Google&#8217;s <a href="https://myaccount.google.com/lesssecureapps?pli=1">Less secure app</a>, if you still haven&#8217;t done it.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_ossec_hids"><a class="anchor" href="#_ossec_hids"></a>OSSEC-HIDS</h4>
+<div class="paragraph">
+<p>There is a very well written <a href="https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-ossec-security-notifications-on-ubuntu-14-04">Digitalocean documentation</a> on OSSEC-HIDS which I invite to read. This writing is largely based on it.<br>
+Installation of OSSEC-HIDS will be much easier to complete as the root user:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ su -</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Installation of OSSEC involves some compiling, so you need gcc and make installed.<br>
+You can install both by installing a single package called 'build-essential'<br>
+You also need to install a package called 'inotify-tools', which is required for real-time alerting to work.<br>
+The installation process may require some time.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ apt install build-essential inotify-tools</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Check if zlib1g-dev is installed:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ apt-cache policy zlib1g-dev</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If it is not installed, install it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ apt install zlib1g-dev</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Download the OSSEC tarball and the file containing its cryptographic checksums:
+(Go to <a href="https://www.ossec.net/downloads/" class="bare">https://www.ossec.net/downloads/</a> and right click on the ossec-hids-3.3.0.tar.gz link to find the argument for wget).</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ cd /tmp/
+$ wget https://github.com/ossec/ossec-hids/archive/3.3.0.tar.gz
+$ wget https://ftp.pcre.org/pub/pcre/pcre2-10.32.tar.gz
+$ mv 3.3.0.tar.gz ossec-hids-3.3.0.tar.gz</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+At present the OSSEC&#8217;s Latest Stable Release is 3.3.0, however a more recent version might be available for you.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+There is an issue concerning the 3.3.0 release: <a href="https://github.com/ossec/ossec-hids/issues/1663">Build fails because of missing pcre2-10.32</a>. The solution was to move pcre2-10.32 to <code>/tmp/ossec-hids-3.3.0/src/external/</code> before installation. With more recent versions of OSSEC the issue might have changed, so my advice is to install Ubuntu in Virtualbox and test there OSSEC installation.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>OSSEC can be installed in server, agent, local or hybrid mode.
+This installation is for monitoring the server that OSSEC is installed on. That means a local installation.</p>
+</div>
+<div class="paragraph">
+<p>Before installation can start, you have to expand the file. You do that by typing:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ tar -zxf ossec-hids-3.3.0.tar.gz
+$ tar -zxf pcre2-10.32.tar.gz
+$ mv pcre2-10.32/ ./ossec-hids-3.3.0/src/external/
+$ cd ossec-hids-3.3.0
+$ ls -l</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To install OSSEC run the shell script:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ ./install.sh</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Accept the default language (english) and press ENTER to start the installation process.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Choose the 'local' kind of installation: Type local and press ENTER.</p>
+</li>
+<li>
+<p>Choose where to install the OSSEC HIDS [/var/ossec]: press ENTER</p>
+</li>
+<li>
+<p>Do you want e-mail notification? (y/n) [y]: press ENTER</p>
+<div class="ulist">
+<ul>
+<li>
+<p>What&#8217;s your e-mail address?: <a href="mailto:fireworks.app@gmail.com">fireworks.app@gmail.com</a></p>
+</li>
+<li>
+<p>We found your SMTP server as: mail.example.com.<br>
+Do you want to use it? (y/n) [y]: press n<br>
+Type: 127.0.0.1</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Do you want to run the integrity check daemon? (y/n) [y]: press ENTER</p>
+</li>
+<li>
+<p>Do you want to run the rootkit detection engine? (y/n) [y]: press ENTER</p>
+</li>
+<li>
+<p>Do you want to enable active response? (y/n) [y]: press ENTER</p>
+</li>
+<li>
+<p>Do you want to enable the firewall-drop response? (y/n) [y]: press ENTER</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Do you want to add more IPs to the white list? (y/n)? [n]: press ENTER</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>OSSEC will now present a default list of files that it will monitor.<br>
+Additional files can be added after installation, so press ENTER.<br>
+By this time, the installer has all the information it needs to install OSSEC.<br>
+Installation takes about 5 minutes. If installation is successful, you are now ready to start and configure OSSEC.</p>
+</div>
+<div class="paragraph">
+<p>If installation succeeds, you should see this type of output:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>To start OSSEC HIDS: /var/ossec/bin/ossec-control start</p>
+</li>
+<li>
+<p>To stop  OSSEC HIDS: /var/ossec/bin/ossec-control stop</p>
+</li>
+<li>
+<p>The configuration can be viewed or modified at /var/ossec/etc/ossec.conf</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>OSSEC&#8217;s main configuration file is in the /var/ossec/etc directory.<br>
+Predefined rules are in the /var/ossec/rules directory<br>
+Commands used to manage OSSEC are in /var/ossec/bin<br>
+Take note of the /var/ossec/logs directory. If OSSEC ever throws an error, the /var/ossec/logs/ossec.log file in that directory is the first place to look.</p>
+</div>
+<div class="paragraph">
+<p>The main configuration file is /var/ossec/etc/ossec.conf<br>
+Before modifying the file, make a backup copy, just in case:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ cp /var/ossec/etc/ossec.conf /var/ossec/etc/ossec.conf.00</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now open the configuration file using vi:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ vi /var/ossec/etc/ossec.conf</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Add the 'email_maxperhour' directive, changing the default value of 12.
+'email_to' and 'email_from' can be the same:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">&lt;global&gt;
+    &lt;email_notification&gt;yes&lt;/email_notification&gt;
+    &lt;email_to&gt;fireworks.app@gmail.com&lt;/email_to&gt;
+    &lt;smtp_server&gt;127.0.0.1&lt;/smtp_server&gt;
+    &lt;email_from&gt;ossec@fireworks.io&lt;/email_from&gt;
+    &lt;email_maxperhour&gt;1&lt;/email_maxperhour&gt;
+&lt;/global&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We will turn on alerts for new file creation.<br>
+Add the line &lt;alert_new_files&gt;yes&lt;/alert_new_files&gt; so that it reads like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">&lt;syscheck&gt;
+    &lt;!-- Frequency that syscheck is executed - default to every 22 hours --&gt;
+    &lt;frequency&gt;79200&lt;/frequency&gt;
+
+    &lt;alert_new_files&gt;yes&lt;/alert_new_files&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Right after that, you should see the list of system directories that OSSEC monitors. It reads like:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">&lt;!-- Directories to check  (perform all possible verifications) --&gt;
+&lt;directories check_all="yes"&gt;/etc,/usr/bin,/usr/sbin&lt;/directories&gt;
+&lt;directories check_all="yes"&gt;/bin,/sbin&lt;/directories&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s enable real-time monitoring by adding the settings report_changes="yes" realtime="yes" to each line. Modify these lines so they read:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">&lt;!-- Directories to check  (perform all possible verifications) --&gt;
+&lt;directories report_changes="yes" realtime="yes" check_all="yes"&gt;/etc,/usr/bin,/usr/sbin&lt;/directories&gt;
+&lt;directories report_changes="yes" realtime="yes" check_all="yes"&gt;/bin,/sbin&lt;/directories&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>That&#8217;s all the changes for ossec.conf. You may save and close the file.</p>
+</div>
+<div class="paragraph">
+<p>The next file to modify is in the /var/ossec/rules directory, so cd into it by typing:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ cd /var/ossec/rules
+$ ls -lgG</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Only two of those files are of interest to us now - local_rules.xml and ossec_rules.xml.<br>
+The latter contains OSSEC&#8217;s default rule definitions, while the former is where you add your custom rules.<br>
+In other words, aside from local_rules.xml, you don&#8217;t modify any files in this directory.</p>
+</div>
+<div class="paragraph">
+<p>In ossec_rules.xml, the rule that fires when a file is added to a monitored directory is rule 554.<br>
+By default, OSSEC does not send out alerts when that rule is triggered, so the task here is to change that behavior.</p>
+</div>
+<div class="paragraph">
+<p>OSSEC does not send out an alert if a rule has a level set to 0. We want to modify this rule to raise the alert level.
+Instead of changing it in the default file, we will copy the rule to local_rules.xml and modify it so that it can trigger an alert.</p>
+</div>
+<div class="paragraph">
+<p>To do that, make a backup copy of the /var/ossec/rules/local_rules.xml file:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ cp /var/ossec/rules/local_rules.xml /var/ossec/rules/local_rules.xml.00</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Add the new rule at the end of the file. Make sure that it is within the &lt;group&gt; &#8230;&#8203; &lt;/group&gt; tag.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ vim /var/ossec/rules/local_rules.xml</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">&lt;rule id="554" level="7" overwrite="yes"&gt;
+  &lt;category&gt;ossec&lt;/category&gt;
+  &lt;decoded_as&gt;syscheck_new_entry&lt;/decoded_as&gt;
+  &lt;description&gt;File added to the system.&lt;/description&gt;
+  &lt;group&gt;syscheck,&lt;/group&gt;
+&lt;/rule&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Save and close the file.<br>
+See: <a href="https://ossec-docs.readthedocs.io/en/latest/docs/faq/syscheck.html" class="bare">https://ossec-docs.readthedocs.io/en/latest/docs/faq/syscheck.html</a></p>
+</div>
+<div class="paragraph">
+<p>Those are all the changes necessary.</p>
+</div>
+<div class="paragraph">
+<p>Add a logrotate configuration for OSSEC in /etc/logrotate.d</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ vim /etc/logrotate.d/ossec-hids
+
+# Log rotation for Ossec HIDS
+/var/ossec/logs/*.log {
+    create 640 ossec ossec
+    rotate 31
+    compress
+    missingok
+    notifempty
+    olddir /var/ossec/logs/archives/
+    sharedscripts
+    postrotate
+    /var/ossec/bin/ossec-control restart
+    endscript
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Write and quit.<br>
+Check permissions of /etc/logrotate.d/ossec-hids</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ ls -l /etc/logrotate.d/ossec-hids</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>They should be: -rw-r&#8212;&#8203;r-- 1 root root</p>
+</div>
+<div class="paragraph">
+<p>If they are not, change them with:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo chmod 644 /etc/logrotate.d/ossec-hids</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>See: <a href="https://github.com/ossec/ossec-hids/issues/1281" class="bare">https://github.com/ossec/ossec-hids/issues/1281</a></p>
+</div>
+<div class="paragraph">
+<p>By default OSSEC is configured to start at boot, but the first time, you&#8217;ll have to start it manually.</p>
+</div>
+<div class="paragraph">
+<p>If you want to check its current status, type:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ /var/ossec/bin/ossec-control status</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To start OSSEC, type:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ /var/ossec/bin/ossec-control start</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you check the status again, you should get confirmation that OSSEC is now running.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ /var/ossec/bin/ossec-control status</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Eventually, to stop OSSEC type:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ /var/ossec/bin/ossec-control stop</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To restart OSSEC type:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ /var/ossec/bin/ossec-control restart</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Right after starting OSSEC, you should get an email.<br>
+If you did not receive an email, you have to tune up the 'smtp_server' directive in /var/ossec/etc/ossec.conf (see below).
+That&#8217;s another confirmation that OSSEC is working and will send you email alerts whenever something it&#8217;s configured to monitor happens.<br>
+Even when it is restarted, OSSEC will send you an email.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_dokku"><a class="anchor" href="#_dokku"></a>Dokku</h3>
+<div class="paragraph">
+<p>Open a terminal window with two tabs.<br>
+In the first tab go to the root directory of the fireworks application in the local computer.<br>
+ssh as 'marco' to the remote VPS server in the second tab.<br>
+From now on, unless different instructions, we will use the second tab (ssh to the remote server).</p>
+</div>
+<div class="paragraph">
+<p>Follow instructions at: <a href="https://github.com/dokku/dokku#installation" class="bare">https://github.com/dokku/dokku#installation</a><br>
+or at: <a href="http://dokku.viewdocs.io/dokku/#install-curl" class="bare">http://dokku.viewdocs.io/dokku/#install-curl</a><br>
+and at: <a href="http://dokku.viewdocs.io/dokku/getting-started/installation/" class="bare">http://dokku.viewdocs.io/dokku/getting-started/installation/</a></p>
+</div>
+<div class="paragraph">
+<p>Note that the Dokku version downloaded below can be different. I advise you to install the latest stable release.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Dokku installation is a two-phases process. The second phase require a setup via the web installer. If you don&#8217;t complete setup via the web installer, your Dokku installation will remain vulnerable to anyone finding the setup page and inserting their key. See: <a href="http://dokku.viewdocs.io/dokku/getting-started/installation/" class="bare">http://dokku.viewdocs.io/dokku/getting-started/installation/</a>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>To download Dokku we will use wget.<br>
+wget downloads files into the working directory.<br>
+Therefore, once ssh logged into your remote server, do as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ cd /tmp
+$ wget https://raw.githubusercontent.com/dokku/dokku/v0.19.12/bootstrap.sh;
+$ sudo DOKKU_TAG=v0.19.12 bash bootstrap.sh</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The installation process takes about 5-10 minutes, depending upon internet connection speed.<br>
+See: <a href="http://dokku.viewdocs.io/dokku/getting-started/installation/" class="bare">http://dokku.viewdocs.io/dokku/getting-started/installation/</a><br>
+See also: <a href="https://www.youtube.com/watch?v=O6p7g59Ccj8" class="bare">https://www.youtube.com/watch?v=O6p7g59Ccj8</a></p>
+</div>
+<div class="paragraph">
+<p>Once the installation is complete, you can open a browser to setup your SSH key and virtualhost settings.<br>
+Open your browser of choice and navigate to the host&#8217;s IP address and configure Dokku via the web admin.</p>
+</div>
+<div class="paragraph">
+<p>Retrieve your public ssh key by running the following command in the first tab of your terminal (your computer):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ cat ~/.ssh/id_rsa.pub</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Copy your public ssh key in the 'Public key' box.<br>
+In case before Dokku installation you copied ssh key to the server, this field might be prefilled with it.</p>
+</div>
+<div class="paragraph">
+<p>In the <code>hostname</code> box leave the server&#8217;s IP address or, if it is blank, copy your server&#8217;s IP address. Click "Finish setup".</p>
+</div>
+<div class="paragraph">
+<p>Create the application on the Dokku host:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku apps:create fireworks_app</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Set any domains you want:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku domains:set fireworks_app fireworks.io www.fireworks.io</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>See: <a href="https://github.com/dokku/dokku/issues/2727" class="bare">https://github.com/dokku/dokku/issues/2727</a><br>
+See: <a href="http://dokku.viewdocs.io/dokku/configuration/domains/" class="bare">http://dokku.viewdocs.io/dokku/configuration/domains/</a></p>
+</div>
+<div class="paragraph">
+<p>List the custom domains for the application:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku domains fireworks_app</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Dokku offers plugins that serve as replacements to Heroku add-ons.<br>
+We will install plugins for Postgresql, Redis and Sidekiq.<br>
+See: <a href="http://dokku.viewdocs.io/dokku/community/plugins/" class="bare">http://dokku.viewdocs.io/dokku/community/plugins/</a></p>
+</div>
+<div class="sect3">
+<h4 id="_postgres_httpsgithub_comdokkudokku_postgres"><a class="anchor" href="#_postgres_httpsgithub_comdokkudokku_postgres"></a>Postgres: <a href="https://github.com/dokku/dokku-postgres" class="bare">https://github.com/dokku/dokku-postgres</a></h4>
+<div class="paragraph">
+<p>To install postgres run the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo dokku plugin:install https://github.com/dokku/dokku-postgres.git postgres</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Create the Postgres database and link it to your application:
+NOTE: this will restart your app</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku postgres:create fireworks_postgres
+$ dokku postgres:link fireworks_postgres fireworks_app</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_redis_httpsgithub_comdokkudokku_redis"><a class="anchor" href="#_redis_httpsgithub_comdokkudokku_redis"></a>Redis: <a href="https://github.com/dokku/dokku-redis" class="bare">https://github.com/dokku/dokku-redis</a></h4>
+<div class="paragraph">
+<p>To install Redis run the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo dokku plugin:install https://github.com/dokku/dokku-redis.git redis</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Create your Redis container and link the app to the container:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku redis:create fireworks_redis
+$ dokku redis:link fireworks_redis fireworks_app</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The first command creates the Redis container with environment variables, included 'REDIS_URL'.<br>
+It&#8217;s a DSN in a format like this redis://dokku-redis-hello:6379/0<br>
+See: <a href="https://github.com/torchbox/cookiecutter-wagtail/issues/20" class="bare">https://github.com/torchbox/cookiecutter-wagtail/issues/20</a></p>
+</div>
+<div class="paragraph">
+<p>To check if 'REDIS_URL' was set, run the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku config:get fireworks_app REDIS_URL</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>See: <a href="http://dokku.viewdocs.io/dokku/configuration/environment-variables/" class="bare">http://dokku.viewdocs.io/dokku/configuration/environment-variables/</a></p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_dokku_maintenance"><a class="anchor" href="#_dokku_maintenance"></a>dokku-maintenance</h4>
+<div class="paragraph">
+<p>It is useful to get the possibility to turn our application into maintenance mode whenever we push changes. Dokku provides a plugin for this function, called 'dokku-maintenance'.<br>
+See: <a href="https://github.com/dokku/dokku-maintenance" class="bare">https://github.com/dokku/dokku-maintenance</a></p>
+</div>
+<div class="paragraph">
+<p>To install the plugin run the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo dokku plugin:install https://github.com/dokku/dokku-maintenance.git maintenance</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_sendinblue_2"><a class="anchor" href="#_sendinblue_2"></a>Sendinblue</h4>
+<div class="paragraph">
+<p>Set the <code>SENDIBLUE_USERNAME</code> and the <code>SENDIBLUE_PASSWORD</code> environment variables as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku config:set fireworks_app SENDINBLUE_USERNAME="your_sendinblue_username"
+$ dokku config:set fireworks_app SENDINBLUE_PASSWORD="your_master_password"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that the values of the two variables can be retrieved entering in your sendinblue account, clicking on your name in the top right menu, choosing "SMTP &amp; API" and going to the SMTP section.<br>
+The SENDINBLUE_USERNAME value is your Login, in your SMTP setting.<br>
+The SENDINBLUE_PASSWORD value is your master password&#8217;s SMTP KEY VALUE in your SMTP keys.</p>
+</div>
+<div class="paragraph">
+<p>See: <a href="https://help.sendinblue.com/hc/en-us/articles/209462765-What-is-SendinBlue-SMTP-" class="bare">https://help.sendinblue.com/hc/en-us/articles/209462765-What-is-SendinBlue-SMTP-</a></p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_carrierwave"><a class="anchor" href="#_carrierwave"></a>Carrierwave</h4>
+<div class="paragraph">
+<p>In order to allow image resizing in your application, install imagemagick:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo apt-get update
+$ sudo apt-get install imagemagick --fix-missing</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>See: <a href="https://help.ubuntu.com/community/ImageMagick" class="bare">https://help.ubuntu.com/community/ImageMagick</a></p>
+</div>
+<div class="paragraph">
+<p>CarrierWave should be configured in the application as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="ruby" class="language-ruby hljs">config/initializers/carrier_wave.rb
+
+if Rails.env.production?
+  CarrierWave.configure do |config|
+    config.fog_credentials = {
+      # Configuration for Amazon S3
+      :provider              =&gt; 'AWS',
+      :aws_access_key_id     =&gt; ENV['S3_ACCESS_KEY'],
+      :aws_secret_access_key =&gt; ENV['S3_SECRET_KEY']
+    }
+    config.fog_directory     =  ENV['S3_BUCKET']
+  end
+end</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In your VPS it is necessary to set the 'S3_ACCESS_KEY', 'S3_SECRET_KEY' and 'S3_BUCKET' variables as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku config:set fireworks_app S3_ACCESS_KEY="your_access_key"
+$ dokku config:set fireworks_app S3_SECRET_KEY="your_secret_key"
+$ dokku config:set fireworks_app S3_BUCKET="your_bucket_name"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you want, you can add lifecycle management at AWS<br>
+See: <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lifecycle-mgmt.html" class="bare">https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lifecycle-mgmt.html</a></p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_error_handling"><a class="anchor" href="#_error_handling"></a>Error handling</h4>
+<div class="paragraph">
+<p>"I hate to say it but some of your workers will raise exceptions when processing jobs. It&#8217;s true." [Mike Perham]<br>
+See: <a href="https://github.com/mperham/sidekiq/wiki/Error-Handling" class="bare">https://github.com/mperham/sidekiq/wiki/Error-Handling</a></p>
+</div>
+<div class="paragraph">
+<p>Traking errors is a good idea not only for errors raised by Sidekiq jobs, but also for all other errors raised by the application.
+Among the many services, Sentry is the only one to offer a free tier.
+All Sentry organizations receive by Sentry 10,000 events per month of free capacity.</p>
+</div>
+<div class="paragraph">
+<p>Create a free account at Sentry: <a href="https://sentry.io/" class="bare">https://sentry.io/</a><br>
+Bear in mind that the email used to sign up with Sentry will be used by Sentry to send events reports.</p>
+</div>
+<div class="paragraph">
+<p>Integrating Sentry in the application is as simple as to add the required gem in the Gemfile.<br>
+Since Sentry can be configured to add useful information to reported events, it might be convenient to add also the 'browser' gem.
+The browser gem allows to add information about the browser used by the user experiencing the issue.
+It is also useful to get information about the platform used by the browser.<br>
+See: <a href="https://github.com/fnando/browser" class="bare">https://github.com/fnando/browser</a></p>
+</div>
+<div class="paragraph">
+<p>Sentry captures data by using an SDK within your application’s runtime.<br>
+In Rails, all uncaught exceptions will be automatically reported.</p>
+</div>
+<div class="paragraph">
+<p>Checkout to a new branch if you need it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ git checkout -b sentry</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Install the SDK and the browser gem via Rubygems by adding them to your Gemfile:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="gemfile" class="language-gemfile hljs"># A client and integration layer for the Sentry error reporting API.
+gem 'sentry-raven', 							'2.7.2'
+
+# Browser detection
+gem 'browser',										'2.5.3'</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Use the most recent versions for your gems.</p>
+</div>
+<div class="paragraph">
+<p>Run <code>bundle install</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ bundle install</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Much of the usefulness of Sentry comes from additional context data with the events.
+Sentry supports additional context with events and includes the following components:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Tags (useful to index all events)</p>
+</li>
+<li>
+<p>User (the users experiencing the issue)</p>
+</li>
+<li>
+<p>Extra</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>To add additional context data to the events reported by Sentry, edit the application controller as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="ruby" class="language-ruby hljs">app/controllers/application_controller.rb
+
+class ApplicationController &lt; ActionController::Base
+  protect_from_forgery with: :exception
+  include SessionsHelper
+	before_action :set_sentry_context
+
+
+  private
+
+  # Confirms a logged-in user.
+  def logged_in_user
+    unless logged_in?
+      store_location
+      flash[:danger] = "Please log in."
+      redirect_to login_url
+    end
+  end
+
+  def set_sentry_context
+    if logged_in? &amp;&amp; Rails.env.production?
+			Raven.user_context(id: current_user.id, name: current_user.name, email:	current_user.email, ip_address:	request.remote_ip)
+			Raven.tags_context(language: I18n.locale, url: request.url, browser: browser.name, browser_version: browser.full_version, platform: browser.platform)
+    end
+  end
+
+end</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>After you complete setting up a project in Sentry, you’ll be given a value which we call a DSN, or Data Source Name. You can find your DSN in 'Your account name' &#8594; 'Organisation settings' &#8594; 'Projects' &#8594; 'Fireworks' &#8594; 'Client KEYS (DSN)'.</p>
+</div>
+<div class="paragraph">
+<p>Raven will capture and send exceptions to the Sentry server whenever its DSN is set.<br>
+This makes environment-based configuration easy: if you don&#8217;t want to send errors in a certain environment, just don&#8217;t set the DSN in that environment!</p>
+</div>
+<div class="paragraph">
+<p>The raven-ruby documentation advise against configuring the client in the code (not recommended - keep your DSN secret!)<br>
+See: <a href="https://github.com/getsentry/raven-ruby" class="bare">https://github.com/getsentry/raven-ruby</a></p>
+</div>
+<div class="paragraph">
+<p>Therefore we will configure the DSN in the production environment before deploying the application.</p>
+</div>
+<div class="paragraph">
+<p>If you created a new branch for sentry, do as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ rails test
+$ git add -A
+$ git commit -m "Add error handling (Sentry)"
+$ git checkout master
+$ git merge sentry
+$ git push</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now set the 'SENTRY_DSN' variable in your server as follows (second tab):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku config:set fireworks_app SENTRY_DSN="your_dsn"</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_deploy_the_application"><a class="anchor" href="#_deploy_the_application"></a>Deploy the application</h4>
+<div class="paragraph">
+<p>Later on we will install <code>dokku-letsencrypt</code>, in order to retrieve and install TLS certificates from letsencrypt.org. When I installed for the first time <code>dokku-letsencrypt</code>, I noticed that my application was not accessible via SSL. With the help of <a href="https://github.com/josegonzalez">josegonzalez</a> I realized that letsencrypt was entering in conflict with the <code>config.force_ssl = true</code> directive in the <code>config/environments/production.rb</code> file of my application. So the solution was to set this directive to false, then install <code>dokku-letsencrypt</code>, then again restore the directive to true.</p>
+</div>
+<div class="listingblock">
+<div class="title">config/environments/production.rb</div>
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="ruby" class="language-ruby hljs">Rails.application.configure do
+  .
+  .
+  .
+  # Force all access to the app over SSL, use Strict-Transport-Security,
+  # and use secure cookies.
+  config.force_ssl = false
+  .
+  .
+  .
+end</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Commit this change in your application (navigating to the root of your application in your first tab of your terminal):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ git commit -am "set config.force_ssl to false"
+$ git push</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>From the server side.
+Check maintenance status of the application:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku maintenance fireworks_app</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Put the application into maintenance mode:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku maintenance:on fireworks_app</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Before deploying it is necessary to add dokku as a repository for your application.<br>
+See: <a href="http://dokku.viewdocs.io/dokku/deployment/application-deployment/" class="bare">http://dokku.viewdocs.io/dokku/deployment/application-deployment/</a></p>
+</div>
+<div class="paragraph">
+<p>From your client machine, navigate to your app’s project folder and add Dokku as a repo:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ git remote add dokku dokku@fireworks.io:fireworks_app</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Push the master branch of your application to NetCup:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ git push dokku master</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Dokku will deploy your app and give you the URLs where you can reach your application.<br>
+Jot down these urls and preserve them (They should be <a href="http://fireworks.io" class="bare">http://fireworks.io</a> and <a href="http://www.fireworks" class="bare">http://www.fireworks</a> at the moment).</p>
+</div>
+<div class="paragraph">
+<p>Migrate the database at NetCup:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku run fireworks_app rails db:migrate</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Turn maintenance mode to off:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku maintenance:off fireworks_app</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now you can navigate to the given urls to see your application working.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_ssl_in_production"><a class="anchor" href="#_ssl_in_production"></a>SSL in production</h4>
+<div class="paragraph">
+<p>See: <a href="https://github.com/dokku/dokku-letsencrypt" class="bare">https://github.com/dokku/dokku-letsencrypt</a></p>
+</div>
+<div class="paragraph">
+<p>Put your application into maintenance mode:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku maintenance:on fireworks_app</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>dokku-letsencrypt is the official plugin for dokku that gives the ability to automatically retrieve and install TLS certificates from letsencrypt.org.</p>
+</div>
+<div class="paragraph">
+<p>Your app must already be deployed and accessible over the internet (i.e. in the browser) in order to add letsencrypt to your app.</p>
+</div>
+<div class="paragraph">
+<p>List all custom domains for the application:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku domains fireworks_app</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Install the dokku-letsencrypt plugin and update it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ sudo dokku plugin:install https://github.com/dokku/dokku-letsencrypt.git</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To configure it, set an email for your app:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku config:set --no-restart fireworks_app DOKKU_LETSENCRYPT_EMAIL=fireworks.app@gmail.com</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This email will receive the renewal warnings for your certificate.
+Turn it on:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku letsencrypt fireworks_app</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>At the end of the procees you will get 4 urls: <a href="http://fireworks.io" class="bare">http://fireworks.io</a>, <a href="http://www.fireworks" class="bare">http://www.fireworks</a>, <a href="https://fireworks.io" class="bare">https://fireworks.io</a> and <a href="https://www.fireworks" class="bare">https://www.fireworks</a></p>
+</div>
+<div class="paragraph">
+<p>Note that your cert expires in 90 days, so just automate renewal with a cron job.
+Set up a cron job for auto-renewal:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku letsencrypt:cron-job --add</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now with your text editor (Atom probably) you should restore the original value of the <code>config.force_ssl</code> directive:</p>
+</div>
+<div class="listingblock">
+<div class="title">config/environments/production.rb</div>
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="ruby" class="language-ruby hljs">Rails.application.configure do
+  .
+  .
+  .
+  # Force all access to the app over SSL, use Strict-Transport-Security,
+  # and use secure cookies.
+  config.force_ssl = true
+  .
+  .
+  .
+end</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Commit this change in your application (navigating to the root of your application in your first tab of your terminal) and push your application to your remotes:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ git commit -am "set config.force_ssl to true"
+$ git push
+$ git push dokku master</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>On your server side, exit from maintenance status:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku maintenance:off fireworks_app</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As you can see, putting your application into maintenance mode is a good practice before making any change.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_background_processes_sidekiq"><a class="anchor" href="#_background_processes_sidekiq"></a>Background processes: Sidekiq</h4>
+<div class="paragraph">
+<p>Dokku, as of version 0.3.14, includes generic process scaling.<br>
+For versions above that, it is enough to specify a worker process in your Procfile and scale like normal.</p>
+</div>
+<div class="paragraph">
+<p>How to implement Sidekiq in your Rails application is a task dealt in a different context. Here I will explain how to include Sidekiq in your Procfile and how to scale it with Dokku.</p>
+</div>
+<div class="paragraph">
+<p>The Procfile of your application should already contain 2 lines:</p>
+</div>
+<div class="paragraph">
+<p>web: bundle exec puma -C config/puma.rb
+worker: bundle exec sidekiq -C config/sidekiq.yml</p>
+</div>
+<div class="paragraph">
+<p>The first line is a web process for Puma.<br>
+The second line is a worker process for Sidekiq.</p>
+</div>
+<div class="paragraph">
+<p>The web process type holds some significance in that it is the only process type that is automatically scaled to 1 on the initial application deploy.<br>
+See: <a href="http://dokku.viewdocs.io/dokku/deployment/methods/buildpacks/#specifying-commands-via-procfile" class="bare">http://dokku.viewdocs.io/dokku/deployment/methods/buildpacks/#specifying-commands-via-procfile</a></p>
+</div>
+<div class="paragraph">
+<p>From the terminal tab ssh connected to your server do as follows.
+Issuing the ps:scale command with no process type argument will output the current scaling settings for an application:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku ps:scale fireworks_app</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The output should report number 1 web processes.</p>
+</div>
+<div class="paragraph">
+<p>Put your application into maintenance mode:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku maintenance:on fireworks_app</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To scale 2 worker processes, run the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku ps:scale fireworks_app worker=2</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Check that the process scaling succeeded:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku ps:scale fireworks_app</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The output should now report number 1 web processes and number 2 worker processes.<br>
+See: <a href="http://dokku.viewdocs.io/dokku/deployment/process-management/#psscale-command" class="bare">http://dokku.viewdocs.io/dokku/deployment/process-management/#psscale-command</a></p>
+</div>
+<div class="paragraph">
+<p>Finally, turn off maintenance mode from the server side:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku maintenance:off fireworks_app</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_rails_console"><a class="anchor" href="#_rails_console"></a>Rails console</h4>
+<div class="paragraph">
+<p>To run the rails console in sandbox mode, use the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku run fireworks_app rails console --sandbox</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To run the console, use the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku run fireworks_app rails console</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Example<br>
+To add a user, run:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">$ dokku run fireworks_app rails console
+&gt;&gt; user = User.create!(name: "User name", email: "user@domain", password: "password", password_confirmation: "password")
+&gt;&gt; user.toggle!(:activated)
+&gt;&gt; user.update_attribute(:activated_at, Time.zone.now)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To add an administrator:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="console" class="language-console hljs">&gt;&gt; user = User.find_by(email: "email")
+&gt;&gt; user.toggle!(:admin)</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Last updated 2020-10-26 16:30:36 +0100
+</div>
+</div>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js"></script>
+<script>hljs.initHighlighting()</script>
+</body>
+</html>

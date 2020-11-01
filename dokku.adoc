@@ -1,0 +1,1651 @@
+:icons: font
+:source-highlighter: highlightjs
+:sectanchors:
+:highlightjs-theme: default
+:toc: left
+
+= Sendinblue, Dokku and deployment
+
+If you think that your application will have a considerable amount of traffic, my personal advise is to deploy your application not to Heroku, as suggested by the Ruby on Rails Tutorial, but to a different hosting provider, which offers affordable plans. You should consider that Heroku in fact is expensive as you https://www.speedshop.co/2015/07/29/scaling-ruby-apps-to-1000-rpm.html[scale]. The free plan offers only 1 web and 1 worker dynos. _Adding more web dynos allows you to handle more concurrent HTTP requests, and therefore higher volumes of traffic_ (See https://devcenter.heroku.com/articles/dynos#scalability[at Heroku]). Worker dynos are important too. "_Worker dynos can be of any process type declared in your Procfile, other than “web”. Worker dynos are typically used for background jobs, queueing systems, and timed jobs_". Especially background processes are a fundamental part of web applications. For instance, a background process allows to delete automatically all outdated microposts, and free space in your drive.
+
+There are many hosting providers. Among them, two of the most popular choices are https://www.digitalocean.com/[DigitalOcean] and https://www.linode.com/[Linode]. Both offer excellent documentation. Another popular choice is https://www.ovh.com/[OVH]. Otherwise you can look for web hosting providers using a search engine or dedicated web sites like https://hostadvice.com/[HostAdvice]. Also, other places I would recommend are http://www.webhostingtalk.com[WebHostingTalk] and https://www.lowendtalk.com[LowEndTalk].
+
+What I would suggest to consider in choosing a hosting provider are the traffic flatrate, the availabiliy of DDoS protection, the amount of storage space provided and the technical support.
+
+After a long research, for my web application I chose a root server at https://www.netcup.eu[NetCup] because of the fair prices and interesting solutions. A basic root server at present offers 8 GB DDR4 RAM, 2 dedicated cores and 160 GB SSD. They also have a very useful forum where you can find solutions to your questions offered by a very responsive community.
+
+I also purchased my domain at NetCup, because "customers who purchase a web hosting package, a root server system or a managed root server/managed dedicated server from us can add additional domains to their order at particularly attractive rates".
+
+"As an accredited registrar, netcup can register .eu domains directly at the source and offer first-class support for .eu domain queries".
+
+
+== NetCup and Sendinblue
+
+=== Sendinblue
+
+Michael Hartl's Ruby on Rails Tutorial suggests to use https://sendgrid.com/[SendGrid] for emails in production, which is available as an add-on at Heroku for verified accounts. I would instead suggest to use https://sendinblue.com/[Sendinblue] because, comparing their free plans, Sendinblue offers 300 emails per day against 100 emails per day offered by SendGrid.
+
+Fill out the SMTP settings for your production environment:
+
+.config/environments/production.rb
+
+[source, ruby]
+----
+
+Rails.application.configure do
+	...
+  config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.delivery_method = :smtp
+  host = 'fireworks.io'
+  config.action_mailer.default_url_options = { host: host }
+  ActionMailer::Base.smtp_settings = {
+    :address        => 'smtp-relay.sendinblue.com',
+    :port           => '587',
+    :authentication => :plain,
+    :user_name      => ENV['SENDINBLUE_USERNAME'],
+    :password       => ENV['SENDINBLUE_PASSWORD'],
+    :domain         => 'fireworks.io',
+    :enable_starttls_auto => true
+  }
+	...
+end
+
+----
+
+Commit and push your changes:
+
+[source, console]
+----
+$ git commit -am "Configure Sendinblue"
+$ git push
+----
+
+Create an account at https://www.sendinblue.com/[Sendinblue].
+Wait for your sendinblue account to be validated and activated.
+
+In case the account results not yet activated, send an email to 'contact@sendinblue.com' requesting your account activation. You have to specify that you want to use your account only for transactional email.
+
+After that, log in to your account then go to your https://my.sendinblue.com/dashboard[dashboard]. + 
+Then again:
+
+1. Click on your name in the upper right corner
+2. Click on 'Senders & IP'
+3. Go to the 'Domains' tab
+4. Click on 'Add new domain' and write 'fireworks.io' in the text field
+5. Check the box 'I would like to use this domain name to digitally sign my emails'
+6. Click on 'Save'
+
+After clicking 'Save', DNS records appear for the new domain.
+These records have still to be verified and the domain authenticated.
+Leave the DNS records window open.
+
+=== Edit your DNS zone at NetCup
+
+Add the sendinblue DNS records to the NetCup DNS zone.
+You can access to your DNS zone file by visiting the https://www.customercontrolpanel.de[customer control panel], going to the Domains section, clicking on the magnifying glass and then on the DNS section. Your DNS zone should contain the following entries:
+
+|===
+| *Host* | *Type* | *Destination*
+| * | AAAA | IPV6 address
+| * | A | IPV4 address
+| @ | AAAA | IPV6 address
+| @ | A | IPV4 address
+| www | CNAME | @
+| @ | TXT a| [subs=+callouts] 
+sendinblue SPF record <1>
+| @ | TXT a| [subs=+callouts] 
+sendinblue TXT record <2>
+| mail._domainkey | TXT a| [subs=+callouts]
+Sendinblue DKIM record <3>
+| _dmarc | TXT a| [subs=+callouts]
+sendinblue DMARC record <4>
+|===
+
+
+[subs=+callouts]
+<1> Here goes the Sendinblue SPF record for `fireworks.io`, represented by the relative record name `@` in the host column.
+
+<2> Here goes the Sendinblue TXT record for `fireworks.io`, represented by the relative record name `@` in the host column.
+
+<3> Here goes the Sendinblue DKIM record for `mail._domainkey.yandex.com`. In the cell of the host column you have to enter only `mail._domainkey`. See https://forum.netcup.de/anwendung/ccp-customer-control-panel/12220-how-to-add-dkim-spf-and-dmark-records-to-dns-zone/[at NetCup]
+
+<4> Here goes the Sendinblue DMARC record for `_dmarc.yandex.com`. In the cell of the host column you have to enter only `_dmarc`
+
+Close the DNS records window at Sendinblue by clicking the 'x' in the upper right corner. Wait 48 hours (2 days) for DNS changes to fully propagate.
+
+Go back to the Sendinblue 'Senders & IPs - Domains' section. + 
+Click on 'AUTENTICATE THIS DOMAIN' + 
+Check that the 4 records are configured ('configured' should be written on the right hand side of each record). + 
+Click on 'I'm Done'
+
+Now that the domain is authenticated, you will not need to verify your senders (but you need to add them). + 
+See: https://help.sendinblue.com/hc/en-us/articles/115000185270-What-is-a-verified-domain-on-SendinBlue- + 
+See: https://stackoverflow.com/questions/59703029/rails-transactional-email-and-sender-validation
+
+Create a sender going to the 'Senders & IPs - Senders' section. + 
+Click on 'ADD A NEW SENDER' and add the following entries:
+
+From name: fireworks + 
+From email: noreply@fireworks.io
+
+Sender added successfully
+
+Check that the sender at Sendinblue corresponds to the sender in your application:
+
+[source, ruby]
+----
+app/mailers/application_mailer.rb
+
+class ApplicationMailer < ActionMailer::Base
+  default from: "noreply@fireworks.io"
+  layout 'mailer'
+end
+----
+
+=== Your Root Server
+
+From the Server Control Panel:
+
+1. Select Ubuntu 18.04 or 20.04 minimal image from the list of available OS under `Media` --> `Images`;
+2. Wait the necessary time for the deployment to finish.
+3. After finished the installation of Ubuntu, a root password is generated. Jot it down.
+
+=== Connect to Your VPS via SSH
+
+Find your VPS IP address from the Server Control Panel.
+From a terminal of your computer, log into your server via SSH:
+
+[source, console]
+----
+$ ssh root@ip_address
+----
+
+If this is the first time connecting to your root server, you’ll see the authenticity warning.
+
+- Type 'yes' and press 'Enter' to continue connecting.
+- Enter the password generated for the root user
+
+=== Configuring your server
+
+==== Add Swap file
+
+See the well made https://www.digitalocean.com/community/tutorials/how-to-add-swap-space-on-ubuntu-18-04[tutorial] at Digitalocean.
+
+You can see if the system has any configured swap by typing:
+
+[source, console]
+----
+$ sudo swapon --show
+----
+
+If you don’t get back any output, this means your system does not have swap space available currently. You can verify that there is no active swap using the free utility:
+
+[source, console]
+----
+$ free -h
+----
+
+Before we create our swap file, we’ll check our current disk usage to make sure we have enough space. Do this by entering:
+
+[source, console]
+----
+$ df -h
+----
+
+Now that we know our available hard drive space, we can create a swap file on our filesystem. 
+We will allocate a file of the swap size that we want called swapfile in our root (/) directory.
+The best way of creating a swap file is with the fallocate program. This command instantly creates a file of the specified size.
+
+Since the server at NetCup has 8G of RAM, we will create a 8G file:
+
+[source, console]
+----
+$ sudo fallocate -l 8G /swapfile
+----
+
+We can verify that the correct amount of space was reserved by typing:
+
+[source, console]
+----
+$ ls -lh /swapfile
+----
+
+===== Enabling the Swap File
+
+Now that we have a file of the correct size available, we need to actually turn this into swap space.
+First, we need to lock down the permissions of the file so that only the users with root privileges can read the contents.
+This prevents normal users from being able to access the file, which would have significant security implications.
+
+Make the file only accessible to root by typing:
+
+[source, console]
+----
+$ sudo chmod 600 /swapfile
+----
+
+Verify the permissions change by typing:
+
+[source, console]
+----
+$ ls -lh /swapfile
+----
+
+We can now mark the file as swap space by typing:
+
+[source, console]
+----
+$ sudo mkswap /swapfile
+----
+
+After marking the file, we can enable the swap file, allowing our system to start utilizing it:
+
+[source, console]
+----
+$ sudo swapon /swapfile
+----
+
+Verify that the swap is available by typing:
+
+[source, console]
+----
+$ sudo swapon --show
+----
+
+We can check the output of the free utility again to corroborate our findings:
+
+[source, console]
+----
+$ free -h
+----
+
+Our swap has been set up successfully and our operating system will begin to use it as necessary.
+
+===== Making the Swap File Permanent
+
+Our recent changes have enabled the swap file for the current session. 
+However, if we reboot, the server will not retain the swap settings automatically. 
+We can change this by adding the swap file to our /etc/fstab file.
+
+Back up the /etc/fstab file in case anything goes wrong:
+
+[source, console]
+----
+$ sudo cp /etc/fstab /etc/fstab.bak
+----
+
+Add the swap file information to the end of your /etc/fstab file by typing:
+
+[source, console]
+----
+$ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+----
+
+===== Tuning your Swap Settings
+
+There are a few options that you can configure that will have an impact on your system’s performance when dealing with swap.
+
+====== Adjusting the Swappiness Property
+
+The swappiness parameter configures how often your system swaps data out of RAM to the swap space. 
+This is a value between 0 and 100 that represents a percentage.
+With values close to zero, the kernel will not swap data to the disk unless absolutely necessary. 
+Remember, interactions with the swap file are “expensive” in that they take a lot longer than interactions with RAM and they can cause a significant reduction in performance. 
+Telling the system not to rely on the swap much will generally make your system faster.
+
+We can see the current swappiness value by typing:
+
+[source, console]
+----
+$ cat /proc/sys/vm/swappiness
+----
+
+For a Desktop, a swappiness setting of 60 is not a bad value. +  
+For a server, you might want to move it closer to 0.
+
+We can set the swappiness to a different value by using the sysctl command. + 
+For instance, to set the swappiness to 10, we could type:
+
+[source, console]
+----
+$ sudo sysctl vm.swappiness=10
+----
+
+This setting will persist until the next reboot. + 
+We can set this value automatically at restart by adding the line to our /etc/sysctl.conf file:
+
+[source, console]
+----
+$ sudo vi /etc/sysctl.conf
+----
+
+At the bottom, you can add:
+
+[source, console]
+----
+vm.swappiness=10
+----
+
+Save and close the file when you are finished.
+
+====== Adjusting the Cache Pressure Setting
+
+Another related value that you might want to modify is the vfs_cache_pressure. + 
+You can see the current value by querying the proc filesystem again:
+
+[source, console]
+----
+$ cat /proc/sys/vm/vfs_cache_pressure
+----
+
+We can set this to a more conservative setting like 50 by typing:
+
+[source, console]
+----
+$ sudo sysctl vm.vfs_cache_pressure=50
+----
+
+Again, this is only valid for our current session. 
+We can change that by adding it to our configuration file like we did with our swappiness setting:
+
+[source, console]
+----
+$ sudo vi /etc/sysctl.conf
+----
+
+At the bottom, add the line that specifies your new value:
+
+[source, console]
+----
+vm.vfs_cache_pressure=50
+----
+
+Save and close the file when you are finished.
+
+==== Server identity
+
+First of all install Software Updates:
+
+[source, console]
+----
+$ sudo apt-get update && sudo apt-get upgrade
+----
+
+Now it is time to set the hostname: choose whatever name you like, for instance 'gondor'. + 
+See: https://linuxize.com/post/how-to-change-hostname-on-ubuntu-18-04/[how to change hostname] + 
+Set the hostname of your system:
+
+[source, console]
+----
+$ hostnamectl set-hostname gondor
+----
+
+Edit the /etc/hosts file:
+
+[source, console]
+----
+$ vi /etc/hosts
+----
+
+[source, console]
+----
+127.0.0.1	    localhost
+127.0.1.1	    gondor.fireworks.io	  fireworks.io	  gondor
+ipv4        	gondor.fireworks.io	  fireworks.io	  gondor
+
+# The following lines are desirable for IPv6 capable hosts
+::1     localhost ip6-localhost ip6-loopback
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+ipv6    gondor.fireworks.io	  fireworks.io	  gondor
+----
+
+Put your actual ipv4 and ipv6 in their respective places. + 
+You can find your ipv4 and ipv6 addresses in `/etc/netplan/50-cloud-init.yaml`.
+
+[source, console]
+----
+cat /etc/netplan/50-cloud-init.yaml
+----
+
+=== Securing your server
+
+The following instructions are an excerpt from https://www.linode.com/docs/security/securing-your-server[Linode's documentation]
+
+Open a terminal window with two tabs. + 
+The first tab is for your local computer, necessary to upload the public key to the VPS server. + 
+The second tab is for ssh log into the VPS server.
+
+1. ssh as root to your server (second tab)
+2. check if ufw is enabled with the following command:
+
+   $ ufw status   
+
+   if the previous script returned Status: active and a list of ports, ufw is enabled.
+   
+3. To disable ufw, run the following command:
+
+   $ ufw disable 
+
+See http://dokku.viewdocs.io/dokku/getting-started/troubleshooting/[troubleshooting at Dokku]
+
+Check if the unattended-upgrades package is installed:
+
+[source, console]
+----
+$ dpkg -l unattended-upgrades
+----
+
+If it is not installed, follow instructions at the following links:
+
+https://help.ubuntu.com/18.04/serverguide/automatic-updates.html[Ubuntu 18.04] + 
+https://ubuntu.com/server/docs[Other Ubuntu versions]
+
+`unattended-upgrades` log files are in `/var/log/unattended-upgrades` + 
+Package `unattended-upgrades` installs a logrotate configuration file in `/etc/logrotate.d/unattended-upgrades`
+
+==== Add a Limited User Account
+
+From 'man adduser': 'adduser' and 'addgroup' add users and groups to the system according to command line options and configuration information in `/etc/adduser.conf`. + 
+Read `/etc/adduser.conf`:
+
+[source, console]
+----
+$ less /etc/adduser.conf
+----
+
+The process of adding a user with 'adduser' is interactive. + 
+It asks for: Password, Full Name, Room Number, Work Phone, Home Phone, Other
+
+Type "Faramir captain of the White Tower" when asked for full name. Leave blank the others. + 
+Choose a strong password.
+
+[source, console]
+----
+$ adduser faramir
+----
+
+Add the user to the sudo group so you’ll have administrative privileges:
+
+[source, console]
+----
+$ adduser faramir sudo
+----
+
+After creating your limited user, disconnect from your VPS:
+
+[source, console]
+----
+$ exit
+----
+
+Log back in as your new user:
+
+[source, console]
+----
+$ ssh faramir@server_ip_address
+----
+
+==== Harden SSH Access
+
+From your local shell (first tab), upload the public key to your VPS:
+
+[source, console]
+----
+$ ssh-copy-id faramir@server_ip_address
+----
+
+The server would ask you for faramir's password at the NetCup server. + 
+See https://www.digitalocean.com/community/tutorials/how-to-set-up-ssh-keys-on-ubuntu-1804[at DigitalOcean]
+
+Check the permissions for the ssh directory and content (second tab):
+
+[source, console]
+----
+$ ls -l ~/.ssh
+----
+
+Permissions should be as follows:
+
+[source, console]
+----
+drwx------ faramir faramir . + 
+drwxr-xr-x faramir faramir .. + 
+-rw------- faramir faramir authorized_keys
+----
+
+In case permissions are different, set permissions for the public key directory and the key file itself:
+
+[source, console]
+----
+$ sudo chmod 700 -R ~/.ssh && sudo chmod 600 ~/.ssh/authorized_keys
+$ ls -l ~/.ssh
+----
+
+Now exit and log back into your Linode. 
+If you specified a passphrase for your private key, you’ll need to enter it.
+Check that user faramir can now access via ssh with key-pair:
+
+[source, console]
+----
+$ exit
+$ ssh faramir@server_ip_address
+----
+
+NOTE1: if there is a passphrase for the ssh key, it will be asked during ssh login
+
+NOTE2: in case you forgot the passphrase, you need to generate a new ssh key pair
+			 See: https://www.linode.com/docs/security/securing-your-server#create-an-authentication-key-pair
+
+
+Edit /etc/ssh/sshd_config:
+
+[source, console]
+----
+$ sudo vi /etc/ssh/sshd_config
+----
+
+
+Set for the following directives the suggested values:
+
+[source, console]
+----
+PermitRootLogin no
+PubkeyAuthentication yes
+PasswordAuthentication no
+Banner none
+----
+
+then the following directives should be added:
+
+[source, console]
+----
+AllowTcpForwarding no
+GatewayPorts no
+----
+
+Make sshd listen on only one internet protocol looking for the 'AddressFamily' directive and setting it to 'inet':
+
+[source, console]
+----
+AddressFamily inet
+----
+
+Save and exit.
+
+Restart the SSH service to load the new configuration using one of the two commands below:
+
+[source, console]
+----
+$ sudo systemctl restart ssh
+----
+
+==== IPTABLES
+
+See https://www.linode.com/docs/security/firewalls/control-network-traffic-with-iptables#basic-iptables-rulesets-for-ipv4-and-ipv6[IPTABLES documentation at Linode]
+
+Since I am not very familiar with IPTABLES I searched the Internet for basic rulesets good for a web server. At Linode I found interesting documentation, so, in case you are not knowledgeable about configuring iptables, I would suggest to use their suggested basic rulesets included in the above link.
+
+Copy the basic iptables rulesets for IPv4 and IPv6 in the suggested locations:
+
+[source, console]
+----
+$ sudo vi /tmp/v4
+----
+Copy & paste, write and quit
+
+[source, console]
+----
+$ sudo vi /tmp/v6
+----
+Copy & paste, write and quit
+
+Import the rulesets into immediate use:
+
+[source, console]
+----
+$ sudo iptables-restore < /tmp/v4
+$ sudo ip6tables-restore < /tmp/v6
+----
+
+Check whether iptables-persistent is already installed:
+
+[source, console]
+----
+$ dpkg -l iptables-persistent
+----
+
+If dpkg returns that there are no matching packages, you will need to install the iptables-persistent package:
+
+[source, console]
+----
+$ sudo apt-get install iptables-persistent
+----
+
+See https://www.linode.com/docs/security/firewalls/control-network-traffic-with-iptables/#introduction-to-iptables-persistent[at Linode] + 
+During the installation, you will be prompted twice. + 
+The first prompt is asking if you would like to save your current IPv4 rules. + 
+The second prompt is to save the rules configured for IPv6. + 
+After the install is complete, you should see the iptables’s subdirectory. + 
+Run the `ls /etc/iptables` command to verify that your output resembles the following:
+
+[source, console]
+----
+$ ls /etc/iptables
+rules.v4  rules.v6
+----
+
+Use the `rules.v4` or `rules.v6` files to add, delete or edit the rules for your server.
+The syntax for altering table rules is the same as from the iptables command line.
+
+In case you make any change to the `rules.v4` and `rules.v6` files, to enforce the iptables rules and ensure that they persist after reboot run `dpkg-reconfigure` and respond Yes when prompted:
+
+[source, console]
+----
+$ dpkg-reconfigure iptables-persistent
+----
+
+==== Postfix
+
+Postfix is a Mail Transfer Agent (MTA) that can act as an SMTP server or client to send or receive email. + 
+There are many reasons why you would want to configure Postfix to send email using Google Apps and Gmail. + 
+One reason is to avoid getting your mail flagged as spam if your current server’s IP has been added to a blacklist. + 
+You will use Postfix to send Ossec email alerts from your server to your account Google. Thus you should have or create a Google accounts for your application, say fireworks_app@google.com, and turn on the https://myaccount.google.com/lesssecureapps?pli=1[less secure app access].
+
+Let’s update the package database first:
+
+[source, console]
+----
+$ sudo apt-get update && sudo apt-get upgrade
+----
+
+Install mailutils, which will automatically install Postfix.
+
+[source, console]
+----
+$ sudo apt install -y mailutils
+----
+
+During the Postfix installation, a prompt will appear asking for your General type of mail configuration. + 
+Select 'Internet Site'.
+
+Click Enter and then Enter the fully qualified name of your domain: gondor.fireworks.io
+
+Note that you can always reconfigure Postfix by running the command below:
+
+[source, console]
+----
+$ dpkg-reconfigure postfix
+----
+
+Once the installation is complete, confirm that the 'myhostname' parameter is configured with your server’s FQDN:
+
+[source, console]
+----
+$ less /etc/postfix/main.cf
+myhostname = gondor.fireworks.io
+----
+
+Edit the Postfix configuration file:
+
+[source, console]
+----
+$ sudo vim /etc/postfix/main.cf
+----
+
+Change the line that reads inet_interfaces = all to inet_interfaces = loopback-only.
+
+[source, console]
+----
+inet_interfaces = loopback-only
+----
+
+Find and modify relayhost in /etc/postfix/main.cf to match the following line:
+
+[source, console]
+----
+relayhost = [smtp.gmail.com]:587
+----
+
+At the end of the file, add the following parameters to enable authentication:
+
+[source, console]
+----
+# Enable SASL authentication
+smtp_sasl_auth_enable = yes
+# Disallow methods that allow anonymous authentication
+smtp_sasl_security_options = noanonymous
+# Location of sasl_passwd
+smtp_sasl_password_maps = hash:/etc/postfix/sasl/sasl_passwd
+# Enable STARTTLS encryption
+smtp_tls_security_level = encrypt
+# Location of CA certificates
+smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
+----
+
+Write & quit.
+
+Add Gmail Username and Password to PostfixPermalink
+
+Usernames and passwords are stored in sasl_passwd in the /etc/postfix/sasl/ directory. + 
+In this section, you’ll add your email login credentials to this file and to Postfix.
+
+Open or create the /etc/postfix/sasl/sasl_passwd file and add the SMTP Host, username, and password information:
+
+[source, console]
+----
+$ sudo vim /etc/postfix/sasl/sasl_passwd
+
+[smtp.gmail.com]:587 fireworks.app@gmail.com:your_gmail_password
+----
+
+Create the hash db file for Postfix by running the postmap command:
+
+[source, console]
+----
+$ sudo postmap /etc/postfix/sasl/sasl_passwd
+----
+
+If all went well, you should have a new file named `sasl_passwd.db` in the `/etc/postfix/sasl/` directory.
+
+Secure Your Postfix Hash Database and Email Password FilesPermalink
+
+The `/etc/postfix/sasl/sasl_passwd` and the `/etc/postfix/sasl/sasl_passwd.db` files created in the previous steps contain your SMTP credentials in plain text.
+
+To restrict access to these files, change their permissions so that only the root user can read from or write to the file. Run the following commands to change the ownership to root and update the permissions for the two files:
+
+[source, console]
+----
+$ sudo chown root:root /etc/postfix/sasl/sasl_passwd /etc/postfix/sasl/sasl_passwd.db
+$ sudo chmod 0600 /etc/postfix/sasl/sasl_passwd /etc/postfix/sasl/sasl_passwd.db
+----
+
+Restart Postfix:
+
+[source, console]
+----
+$ sudo systemctl restart postfix
+----
+
+Send a Test Mail
+
+We’ll now send a test email message.
+
+[source, console]
+----
+echo "Test Email" | mail -s "Email test subject" fireworks.app@gmail.com
+----
+
+Don’t forget to check your spam folder.
+
+If you still haven’t received any mail, check the mail error log. + 
+See: https://devanswers.co/configure-postfix-to-use-gmail-smtp-on-ubuntu-16-04-digitalocean-droplet/
+
+Consider that you might be required to turn on Google's https://myaccount.google.com/lesssecureapps?pli=1[Less secure app], if you still haven't done it.
+
+==== OSSEC-HIDS
+
+There is a very well written https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-ossec-security-notifications-on-ubuntu-14-04[Digitalocean documentation] on OSSEC-HIDS which I invite to read. This writing is largely based on it. + 
+Installation of OSSEC-HIDS will be much easier to complete as the root user:
+
+[source, console]
+----
+$ su -
+----
+
+Installation of OSSEC involves some compiling, so you need gcc and make installed. + 
+You can install both by installing a single package called 'build-essential' + 
+You also need to install a package called 'inotify-tools', which is required for real-time alerting to work. + 
+The installation process may require some time.
+
+[source, console]
+----
+$ apt install build-essential inotify-tools
+----
+
+Check if zlib1g-dev is installed:
+
+[source, console]
+----
+$ apt-cache policy zlib1g-dev
+----
+
+If it is not installed, install it:
+
+[source, console]
+----
+$ apt install zlib1g-dev
+----
+
+Download the OSSEC tarball and the file containing its cryptographic checksums:
+(Go to https://www.ossec.net/downloads/ and right click on the ossec-hids-3.3.0.tar.gz link to find the argument for wget).
+
+[source, console]
+----
+$ cd /tmp/
+$ wget https://github.com/ossec/ossec-hids/archive/3.3.0.tar.gz
+$ wget https://ftp.pcre.org/pub/pcre/pcre2-10.32.tar.gz
+$ mv 3.3.0.tar.gz ossec-hids-3.3.0.tar.gz
+----
+
+NOTE: At present the OSSEC's Latest Stable Release is 3.3.0, however a more recent version might be available for you. 
+
+WARNING: There is an issue concerning the 3.3.0 release: https://github.com/ossec/ossec-hids/issues/1663[Build fails because of missing pcre2-10.32]. The solution was to move pcre2-10.32 to `/tmp/ossec-hids-3.3.0/src/external/` before installation. With more recent versions of OSSEC the issue might have changed, so my advice is to install Ubuntu in Virtualbox and test there OSSEC installation.
+
+OSSEC can be installed in server, agent, local or hybrid mode. 
+This installation is for monitoring the server that OSSEC is installed on. That means a local installation.
+
+Before installation can start, you have to expand the file. You do that by typing:
+
+[source, console]
+----
+$ tar -zxf ossec-hids-3.3.0.tar.gz
+$ tar -zxf pcre2-10.32.tar.gz
+$ mv pcre2-10.32/ ./ossec-hids-3.3.0/src/external/
+$ cd ossec-hids-3.3.0
+$ ls -l
+----
+
+To install OSSEC run the shell script:
+
+[source, console]
+----
+$ ./install.sh
+----
+
+Accept the default language (english) and press ENTER to start the installation process.
+
+1. Choose the 'local' kind of installation: Type local and press ENTER.
+2. Choose where to install the OSSEC HIDS [/var/ossec]: press ENTER
+3. Do you want e-mail notification? (y/n) [y]: press ENTER
+	 - What's your e-mail address?: fireworks.app@gmail.com
+	 - We found your SMTP server as: mail.example.com. + 
+     Do you want to use it? (y/n) [y]: press n + 
+     Type: 127.0.0.1
+4. Do you want to run the integrity check daemon? (y/n) [y]: press ENTER
+5. Do you want to run the rootkit detection engine? (y/n) [y]: press ENTER
+6. Do you want to enable active response? (y/n) [y]: press ENTER
+7. Do you want to enable the firewall-drop response? (y/n) [y]: press ENTER
+   - Do you want to add more IPs to the white list? (y/n)? [n]: press ENTER
+
+OSSEC will now present a default list of files that it will monitor. + 
+Additional files can be added after installation, so press ENTER. + 
+By this time, the installer has all the information it needs to install OSSEC. + 
+Installation takes about 5 minutes. If installation is successful, you are now ready to start and configure OSSEC.
+
+If installation succeeds, you should see this type of output:
+
+- To start OSSEC HIDS: /var/ossec/bin/ossec-control start
+- To stop  OSSEC HIDS: /var/ossec/bin/ossec-control stop
+- The configuration can be viewed or modified at /var/ossec/etc/ossec.conf
+
+OSSEC's main configuration file is in the /var/ossec/etc directory. + 
+Predefined rules are in the /var/ossec/rules directory + 
+Commands used to manage OSSEC are in /var/ossec/bin + 
+Take note of the /var/ossec/logs directory. If OSSEC ever throws an error, the /var/ossec/logs/ossec.log file in that directory is the first place to look.
+
+The main configuration file is /var/ossec/etc/ossec.conf + 
+Before modifying the file, make a backup copy, just in case:
+
+[source, console]
+----
+$ cp /var/ossec/etc/ossec.conf /var/ossec/etc/ossec.conf.00
+----
+
+Now open the configuration file using vi:
+
+[source, console]
+----
+$ vi /var/ossec/etc/ossec.conf
+----
+
+Add the 'email_maxperhour' directive, changing the default value of 12.
+'email_to' and 'email_from' can be the same:
+
+[source, console]
+----
+<global>
+    <email_notification>yes</email_notification>
+    <email_to>fireworks.app@gmail.com</email_to>
+    <smtp_server>127.0.0.1</smtp_server>
+    <email_from>ossec@fireworks.io</email_from>
+    <email_maxperhour>1</email_maxperhour>
+</global>
+----
+
+We will turn on alerts for new file creation. + 
+Add the line <alert_new_files>yes</alert_new_files> so that it reads like this:
+
+[source, console]
+----
+<syscheck>
+    <!-- Frequency that syscheck is executed - default to every 22 hours -->
+    <frequency>79200</frequency>
+
+    <alert_new_files>yes</alert_new_files>
+----
+
+Right after that, you should see the list of system directories that OSSEC monitors. It reads like:
+
+[source, console]
+----
+<!-- Directories to check  (perform all possible verifications) -->
+<directories check_all="yes">/etc,/usr/bin,/usr/sbin</directories>
+<directories check_all="yes">/bin,/sbin</directories>
+----
+
+Let's enable real-time monitoring by adding the settings report_changes="yes" realtime="yes" to each line. Modify these lines so they read:
+
+[source, console]
+----
+<!-- Directories to check  (perform all possible verifications) -->
+<directories report_changes="yes" realtime="yes" check_all="yes">/etc,/usr/bin,/usr/sbin</directories>
+<directories report_changes="yes" realtime="yes" check_all="yes">/bin,/sbin</directories>
+----
+
+That's all the changes for ossec.conf. You may save and close the file.
+
+The next file to modify is in the /var/ossec/rules directory, so cd into it by typing:
+
+[source, console]
+----
+$ cd /var/ossec/rules
+$ ls -lgG
+----
+
+Only two of those files are of interest to us now - local_rules.xml and ossec_rules.xml. + 
+The latter contains OSSEC's default rule definitions, while the former is where you add your custom rules. + 
+In other words, aside from local_rules.xml, you don't modify any files in this directory.
+
+In ossec_rules.xml, the rule that fires when a file is added to a monitored directory is rule 554. +  
+By default, OSSEC does not send out alerts when that rule is triggered, so the task here is to change that behavior.
+
+OSSEC does not send out an alert if a rule has a level set to 0. We want to modify this rule to raise the alert level. 
+Instead of changing it in the default file, we will copy the rule to local_rules.xml and modify it so that it can trigger an alert.
+
+To do that, make a backup copy of the /var/ossec/rules/local_rules.xml file:
+
+[source, console]
+----
+$ cp /var/ossec/rules/local_rules.xml /var/ossec/rules/local_rules.xml.00
+----
+
+Add the new rule at the end of the file. Make sure that it is within the <group> ... </group> tag.
+
+[source, console]
+----
+$ vim /var/ossec/rules/local_rules.xml
+----
+
+[source, console]
+----
+<rule id="554" level="7" overwrite="yes">
+  <category>ossec</category>
+  <decoded_as>syscheck_new_entry</decoded_as>
+  <description>File added to the system.</description>
+  <group>syscheck,</group>
+</rule>
+----
+
+Save and close the file. + 
+See: https://ossec-docs.readthedocs.io/en/latest/docs/faq/syscheck.html
+
+Those are all the changes necessary.
+
+Add a logrotate configuration for OSSEC in /etc/logrotate.d
+
+[source, console]
+----
+$ vim /etc/logrotate.d/ossec-hids
+
+# Log rotation for Ossec HIDS
+/var/ossec/logs/*.log {
+    create 640 ossec ossec
+    rotate 31
+    compress
+    missingok
+    notifempty
+    olddir /var/ossec/logs/archives/
+    sharedscripts
+    postrotate
+    /var/ossec/bin/ossec-control restart
+    endscript
+}
+----
+
+Write and quit. + 
+Check permissions of /etc/logrotate.d/ossec-hids
+
+[source, console]
+----
+$ ls -l /etc/logrotate.d/ossec-hids
+----
+
+They should be: -rw-r--r-- 1 root root
+
+If they are not, change them with:
+
+[source, console]
+----
+$ sudo chmod 644 /etc/logrotate.d/ossec-hids
+----
+
+See: https://github.com/ossec/ossec-hids/issues/1281
+
+By default OSSEC is configured to start at boot, but the first time, you'll have to start it manually.
+
+If you want to check its current status, type:
+
+[source, console]
+----
+$ /var/ossec/bin/ossec-control status
+----
+
+To start OSSEC, type:
+
+[source, console]
+----
+$ /var/ossec/bin/ossec-control start
+----
+
+If you check the status again, you should get confirmation that OSSEC is now running.
+
+[source, console]
+----
+$ /var/ossec/bin/ossec-control status
+----
+
+Eventually, to stop OSSEC type:
+
+[source, console]
+----
+$ /var/ossec/bin/ossec-control stop
+----
+
+To restart OSSEC type:
+
+[source, console]
+----
+$ /var/ossec/bin/ossec-control restart
+----
+
+Right after starting OSSEC, you should get an email. + 
+If you did not receive an email, you have to tune up the 'smtp_server' directive in /var/ossec/etc/ossec.conf (see below).
+That's another confirmation that OSSEC is working and will send you email alerts whenever something it's configured to monitor happens. + 
+Even when it is restarted, OSSEC will send you an email.
+
+=== Dokku
+
+Open a terminal window with two tabs. + 
+In the first tab go to the root directory of the fireworks application in the local computer. + 
+ssh as 'marco' to the remote VPS server in the second tab. + 
+From now on, unless different instructions, we will use the second tab (ssh to the remote server).
+
+Follow instructions at: https://github.com/dokku/dokku#installation + 
+or at: http://dokku.viewdocs.io/dokku/#install-curl + 
+and at: http://dokku.viewdocs.io/dokku/getting-started/installation/
+
+Note that the Dokku version downloaded below can be different. I advise you to install the latest stable release.
+
+WARNING: Dokku installation is a two-phases process. The second phase require a setup via the web installer. If you don't complete setup via the web installer, your Dokku installation will remain vulnerable to anyone finding the setup page and inserting their key. See: http://dokku.viewdocs.io/dokku/getting-started/installation/
+
+To download Dokku we will use wget. + 
+wget downloads files into the working directory. + 
+Therefore, once ssh logged into your remote server, do as follows:
+
+[source, console]
+----
+$ cd /tmp
+$ wget https://raw.githubusercontent.com/dokku/dokku/v0.19.12/bootstrap.sh;
+$ sudo DOKKU_TAG=v0.19.12 bash bootstrap.sh
+----
+
+The installation process takes about 5-10 minutes, depending upon internet connection speed. + 
+See: http://dokku.viewdocs.io/dokku/getting-started/installation/ + 
+See also: https://www.youtube.com/watch?v=O6p7g59Ccj8
+
+Once the installation is complete, you can open a browser to setup your SSH key and virtualhost settings. + 
+Open your browser of choice and navigate to the host's IP address and configure Dokku via the web admin.
+
+Retrieve your public ssh key by running the following command in the first tab of your terminal (your computer):
+
+[source, console]
+----
+$ cat ~/.ssh/id_rsa.pub
+----
+
+Copy your public ssh key in the 'Public key' box. + 
+In case before Dokku installation you copied ssh key to the server, this field might be prefilled with it.
+
+In the `hostname` box leave the server's IP address or, if it is blank, copy your server's IP address. Click "Finish setup".
+
+Create the application on the Dokku host:
+
+[source, console]
+----
+$ dokku apps:create fireworks_app
+----
+
+Set any domains you want:
+
+[source, console]
+----
+$ dokku domains:set fireworks_app fireworks.io www.fireworks.io
+----
+
+See: https://github.com/dokku/dokku/issues/2727 + 
+See: http://dokku.viewdocs.io/dokku/configuration/domains/
+
+List the custom domains for the application:
+
+[source, console]
+----
+$ dokku domains fireworks_app
+----
+
+Dokku offers plugins that serve as replacements to Heroku add-ons. + 
+We will install plugins for Postgresql, Redis and Sidekiq. + 
+See: http://dokku.viewdocs.io/dokku/community/plugins/
+
+==== Postgres: https://github.com/dokku/dokku-postgres
+
+To install postgres run the following command:
+
+[source, console]
+----
+$ sudo dokku plugin:install https://github.com/dokku/dokku-postgres.git postgres
+----
+
+Create the Postgres database and link it to your application:
+NOTE: this will restart your app
+
+[source, console]
+----
+$ dokku postgres:create fireworks_postgres
+$ dokku postgres:link fireworks_postgres fireworks_app
+----
+
+==== Redis: https://github.com/dokku/dokku-redis
+
+To install Redis run the following command:
+
+[source, console]
+----
+$ sudo dokku plugin:install https://github.com/dokku/dokku-redis.git redis
+----
+
+Create your Redis container and link the app to the container:
+
+[source, console]
+----
+$ dokku redis:create fireworks_redis
+$ dokku redis:link fireworks_redis fireworks_app
+----
+
+The first command creates the Redis container with environment variables, included 'REDIS_URL'. + 
+It's a DSN in a format like this redis://dokku-redis-hello:6379/0 + 
+See: https://github.com/torchbox/cookiecutter-wagtail/issues/20
+
+To check if 'REDIS_URL' was set, run the following command:
+
+[source, console]
+----
+$ dokku config:get fireworks_app REDIS_URL
+----
+
+See: http://dokku.viewdocs.io/dokku/configuration/environment-variables/
+
+==== dokku-maintenance
+
+It is useful to get the possibility to turn our application into maintenance mode whenever we push changes. Dokku provides a plugin for this function, called 'dokku-maintenance'. + 
+See: https://github.com/dokku/dokku-maintenance
+
+To install the plugin run the following command:
+
+[source, console]
+----
+$ sudo dokku plugin:install https://github.com/dokku/dokku-maintenance.git maintenance
+----
+
+==== Sendinblue
+
+Set the `SENDIBLUE_USERNAME` and the `SENDIBLUE_PASSWORD` environment variables as follows:
+
+[source, console]
+----
+$ dokku config:set fireworks_app SENDINBLUE_USERNAME="your_sendinblue_username"
+$ dokku config:set fireworks_app SENDINBLUE_PASSWORD="your_master_password"
+----
+
+Note that the values of the two variables can be retrieved entering in your sendinblue account, clicking on your name in the top right menu, choosing "SMTP & API" and going to the SMTP section. + 
+The SENDINBLUE_USERNAME value is your Login, in your SMTP setting. + 
+The SENDINBLUE_PASSWORD value is your master password's SMTP KEY VALUE in your SMTP keys.
+
+See: https://help.sendinblue.com/hc/en-us/articles/209462765-What-is-SendinBlue-SMTP-
+
+==== Carrierwave
+
+In order to allow image resizing in your application, install imagemagick:
+
+[source, console]
+----
+$ sudo apt-get update
+$ sudo apt-get install imagemagick --fix-missing
+----
+
+See: https://help.ubuntu.com/community/ImageMagick
+
+CarrierWave should be configured in the application as follows:
+
+[source, ruby]
+----
+config/initializers/carrier_wave.rb
+
+if Rails.env.production?
+  CarrierWave.configure do |config|
+    config.fog_credentials = {
+      # Configuration for Amazon S3
+      :provider              => 'AWS',
+      :aws_access_key_id     => ENV['S3_ACCESS_KEY'],
+      :aws_secret_access_key => ENV['S3_SECRET_KEY']
+    }
+    config.fog_directory     =  ENV['S3_BUCKET']
+  end
+end
+----
+
+In your VPS it is necessary to set the 'S3_ACCESS_KEY', 'S3_SECRET_KEY' and 'S3_BUCKET' variables as follows:
+
+[source, console]
+----
+$ dokku config:set fireworks_app S3_ACCESS_KEY="your_access_key"
+$ dokku config:set fireworks_app S3_SECRET_KEY="your_secret_key"
+$ dokku config:set fireworks_app S3_BUCKET="your_bucket_name"
+----
+
+If you want, you can add lifecycle management at AWS + 
+See: https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lifecycle-mgmt.html
+
+==== Error handling
+
+"I hate to say it but some of your workers will raise exceptions when processing jobs. It's true." [Mike Perham] + 
+See: https://github.com/mperham/sidekiq/wiki/Error-Handling
+
+Traking errors is a good idea not only for errors raised by Sidekiq jobs, but also for all other errors raised by the application.
+Among the many services, Sentry is the only one to offer a free tier.
+All Sentry organizations receive by Sentry 10,000 events per month of free capacity.
+
+Create a free account at Sentry: https://sentry.io/ + 
+Bear in mind that the email used to sign up with Sentry will be used by Sentry to send events reports.
+
+Integrating Sentry in the application is as simple as to add the required gem in the Gemfile. + 
+Since Sentry can be configured to add useful information to reported events, it might be convenient to add also the 'browser' gem.
+The browser gem allows to add information about the browser used by the user experiencing the issue.
+It is also useful to get information about the platform used by the browser. + 
+See: https://github.com/fnando/browser
+
+Sentry captures data by using an SDK within your application’s runtime. + 
+In Rails, all uncaught exceptions will be automatically reported.
+
+Checkout to a new branch if you need it:
+
+[source, console]
+----
+$ git checkout -b sentry
+----
+
+Install the SDK and the browser gem via Rubygems by adding them to your Gemfile:
+
+[source, gemfile]
+----
+# A client and integration layer for the Sentry error reporting API.
+gem 'sentry-raven', 							'2.7.2'
+
+# Browser detection
+gem 'browser',										'2.5.3'
+----
+
+Use the most recent versions for your gems.
+
+Run `bundle install`:
+
+[source, console]
+----
+$ bundle install
+----
+
+Much of the usefulness of Sentry comes from additional context data with the events.
+Sentry supports additional context with events and includes the following components:
+
+1. Tags (useful to index all events)
+2. User (the users experiencing the issue)
+3. Extra
+
+
+To add additional context data to the events reported by Sentry, edit the application controller as follows:
+
+[source, ruby]
+----
+app/controllers/application_controller.rb
+
+class ApplicationController < ActionController::Base
+  protect_from_forgery with: :exception
+  include SessionsHelper
+	before_action :set_sentry_context
+
+
+  private
+
+  # Confirms a logged-in user.
+  def logged_in_user
+    unless logged_in?
+      store_location
+      flash[:danger] = "Please log in."
+      redirect_to login_url
+    end
+  end
+  
+  def set_sentry_context
+    if logged_in? && Rails.env.production?
+			Raven.user_context(id: current_user.id, name: current_user.name, email:	current_user.email, ip_address:	request.remote_ip)
+			Raven.tags_context(language: I18n.locale, url: request.url, browser: browser.name, browser_version: browser.full_version, platform: browser.platform)
+    end
+  end
+
+end
+----
+
+After you complete setting up a project in Sentry, you’ll be given a value which we call a DSN, or Data Source Name. You can find your DSN in 'Your account name' -> 'Organisation settings' -> 'Projects' -> 'Fireworks' -> 'Client KEYS (DSN)'.
+
+Raven will capture and send exceptions to the Sentry server whenever its DSN is set. + 
+This makes environment-based configuration easy: if you don't want to send errors in a certain environment, just don't set the DSN in that environment!
+
+The raven-ruby documentation advise against configuring the client in the code (not recommended - keep your DSN secret!) + 
+See: https://github.com/getsentry/raven-ruby
+
+Therefore we will configure the DSN in the production environment before deploying the application.
+
+If you created a new branch for sentry, do as follows:
+
+[source, console]
+----
+$ rails test
+$ git add -A
+$ git commit -m "Add error handling (Sentry)"
+$ git checkout master
+$ git merge sentry
+$ git push
+----
+
+Now set the 'SENTRY_DSN' variable in your server as follows (second tab):
+
+[source, console]
+----
+$ dokku config:set fireworks_app SENTRY_DSN="your_dsn"
+----
+
+==== Deploy the application
+
+Later on we will install `dokku-letsencrypt`, in order to retrieve and install TLS certificates from letsencrypt.org. When I installed for the first time `dokku-letsencrypt`, I noticed that my application was not accessible via SSL. With the help of https://github.com/josegonzalez[josegonzalez] I realized that letsencrypt was entering in conflict with the `config.force_ssl = true` directive in the `config/environments/production.rb` file of my application. So the solution was to set this directive to false, then install `dokku-letsencrypt`, then again restore the directive to true.
+
+.config/environments/production.rb
+
+[source, ruby]
+----
+Rails.application.configure do
+  .
+  .
+  .
+  # Force all access to the app over SSL, use Strict-Transport-Security,
+  # and use secure cookies.
+  config.force_ssl = false
+  .
+  .
+  .
+end
+----
+
+Commit this change in your application (navigating to the root of your application in your first tab of your terminal):
+
+[source, console]
+----
+$ git commit -am "set config.force_ssl to false"
+$ git push
+----
+
+From the server side.
+Check maintenance status of the application:
+
+[source, console]
+----
+$ dokku maintenance fireworks_app
+----
+
+Put the application into maintenance mode:
+
+[source, console]
+----
+$ dokku maintenance:on fireworks_app
+----
+
+Before deploying it is necessary to add dokku as a repository for your application. + 
+See: http://dokku.viewdocs.io/dokku/deployment/application-deployment/
+
+From your client machine, navigate to your app’s project folder and add Dokku as a repo:
+
+[source, console]
+----
+$ git remote add dokku dokku@fireworks.io:fireworks_app
+----
+
+Push the master branch of your application to NetCup:
+
+[source, console]
+----
+$ git push dokku master
+----
+
+Dokku will deploy your app and give you the URLs where you can reach your application. + 
+Jot down these urls and preserve them (They should be http://fireworks.io and http://www.fireworks at the moment).
+
+Migrate the database at NetCup:
+
+[source, console]
+----
+$ dokku run fireworks_app rails db:migrate
+----
+
+Turn maintenance mode to off:
+
+[source, console]
+----
+$ dokku maintenance:off fireworks_app
+----
+
+Now you can navigate to the given urls to see your application working.
+
+==== SSL in production
+
+See: https://github.com/dokku/dokku-letsencrypt
+
+Put your application into maintenance mode:
+
+[source, console]
+----
+$ dokku maintenance:on fireworks_app
+----
+
+dokku-letsencrypt is the official plugin for dokku that gives the ability to automatically retrieve and install TLS certificates from letsencrypt.org.
+
+Your app must already be deployed and accessible over the internet (i.e. in the browser) in order to add letsencrypt to your app.
+
+List all custom domains for the application:
+
+[source, console]
+----
+$ dokku domains fireworks_app
+----
+
+Install the dokku-letsencrypt plugin and update it:
+
+[source, console]
+----
+$ sudo dokku plugin:install https://github.com/dokku/dokku-letsencrypt.git
+----
+
+To configure it, set an email for your app:
+
+[source, console]
+----
+$ dokku config:set --no-restart fireworks_app DOKKU_LETSENCRYPT_EMAIL=fireworks.app@gmail.com
+----
+
+This email will receive the renewal warnings for your certificate.
+Turn it on:
+
+[source, console]
+----
+$ dokku letsencrypt fireworks_app
+----
+
+At the end of the procees you will get 4 urls: http://fireworks.io, http://www.fireworks, https://fireworks.io and https://www.fireworks
+
+Note that your cert expires in 90 days, so just automate renewal with a cron job.
+Set up a cron job for auto-renewal:
+
+[source, console]
+----
+$ dokku letsencrypt:cron-job --add
+----
+
+Now with your text editor (Atom probably) you should restore the original value of the `config.force_ssl` directive:
+
+.config/environments/production.rb
+
+[source, ruby]
+----
+Rails.application.configure do
+  .
+  .
+  .
+  # Force all access to the app over SSL, use Strict-Transport-Security,
+  # and use secure cookies.
+  config.force_ssl = true
+  .
+  .
+  .
+end
+----
+
+Commit this change in your application (navigating to the root of your application in your first tab of your terminal) and push your application to your remotes:
+
+[source, console]
+----
+$ git commit -am "set config.force_ssl to true"
+$ git push
+$ git push dokku master
+----
+
+On your server side, exit from maintenance status:
+
+[source, console]
+----
+$ dokku maintenance:off fireworks_app
+----
+
+As you can see, putting your application into maintenance mode is a good practice before making any change.
+
+==== Background processes: Sidekiq
+
+Dokku, as of version 0.3.14, includes generic process scaling. + 
+For versions above that, it is enough to specify a worker process in your Procfile and scale like normal.
+
+How to implement Sidekiq in your Rails application is a task dealt in a different context. Here I will explain how to include Sidekiq in your Procfile and how to scale it with Dokku.
+
+The Procfile of your application should already contain 2 lines:
+
+web: bundle exec puma -C config/puma.rb  
+worker: bundle exec sidekiq -C config/sidekiq.yml
+
+The first line is a web process for Puma. + 
+The second line is a worker process for Sidekiq.
+
+The web process type holds some significance in that it is the only process type that is automatically scaled to 1 on the initial application deploy. +  
+See: http://dokku.viewdocs.io/dokku/deployment/methods/buildpacks/#specifying-commands-via-procfile
+
+From the terminal tab ssh connected to your server do as follows.
+Issuing the ps:scale command with no process type argument will output the current scaling settings for an application:
+
+[source, console]
+----
+$ dokku ps:scale fireworks_app
+----
+
+The output should report number 1 web processes.
+
+Put your application into maintenance mode:
+
+[source, console]
+----
+$ dokku maintenance:on fireworks_app
+----
+
+To scale 2 worker processes, run the following command:
+
+[source, console]
+----
+$ dokku ps:scale fireworks_app worker=2
+----
+
+Check that the process scaling succeeded:
+
+[source, console]
+----
+$ dokku ps:scale fireworks_app
+----
+
+The output should now report number 1 web processes and number 2 worker processes. + 
+See: http://dokku.viewdocs.io/dokku/deployment/process-management/#psscale-command
+
+Finally, turn off maintenance mode from the server side:
+
+[source, console]
+----
+$ dokku maintenance:off fireworks_app
+----
+
+==== Rails console
+
+To run the rails console in sandbox mode, use the following command:
+
+[source, console]
+----
+$ dokku run fireworks_app rails console --sandbox
+----
+
+To run the console, use the following command:
+
+[source, console]
+----
+$ dokku run fireworks_app rails console
+----
+
+Example + 
+To add a user, run:
+
+[source, console]
+----
+$ dokku run fireworks_app rails console
+>> user = User.create!(name: "User name", email: "user@domain", password: "password", password_confirmation: "password")
+>> user.toggle!(:activated)
+>> user.update_attribute(:activated_at, Time.zone.now)
+----
+
+
+To add an administrator:
+
+[source, console]
+----
+>> user = User.find_by(email: "email")
+>> user.toggle!(:admin)
+----
+
