@@ -1,0 +1,619 @@
+:icons: font
+:source-highlighter: highlightjs
+:sectanchors:
+:highlightjs-theme: default
+:toc: left
+
+== LIKES and DISLIKES
+
+Likes and dislikes offer the opportunity to a user to express his judgement on a particular micropost. + 
+Users can like or dislike only microposts of their following. + 
+A user should not have the chance of liking and disliking at the same time the same micropost.
+Therefore when a user chooses to like a micropost it is necessary to remove his dislike if it exists and vice versa.
+
+A like or a dislike is an association between a user and a micropost, and in particular is a `has_many :through` association.
+A user has many microposts through his likes or dislikes, and has also many likes and dislikes.
+Also a micropost has many users through its likes and dislikes, and has also many likes and dislikes.
+Likes and dislikes belong to a determined user.
+
+As usual, Git users should create a new topic branch:
+
+[source, console]
+----
+$ git checkout -b likes-dislikes
+----
+
+=== The Like and Dislike models
+
+To get started with the implementation, we first generate a migration for the Like model:
+
+[source, console]
+----
+$ rails generate model Like user:references micropost:references
+----
+
+The generated migration is:
+
+.db/migrate/[timestamp]_create_likes.rb
+
+[source, ruby]
+----
+class CreateLikes < ActiveRecord::Migration
+  def change
+    create_table :likes do |t|
+      t.references :user, foreign_key: true
+      t.references :micropost, foreign_key: true
+
+      t.timestamps null: false
+    end
+    add_index :likes, [:user_id, :micropost_id], unique: true
+  end
+end
+----
+
+NOTE: we added a multiple-key index on likes that enforces uniqueness on (user_id, micropost_id) pairs, so that a user can’t like a micropost more than once. + 
+Also, we may need to find if a user has a like on a particular micropost.
+
+Then we generate a migration for the Dislike model:
+
+[source, console]
+----
+$ rails generate model Dislike user:references micropost:references
+----
+
+The generated migration is:
+
+.db/migrate/[timestamp]_create_dislikes.rb
+
+[source, ruby]
+----
+class CreateDislikes < ActiveRecord::Migration
+  def change
+    create_table :dislikes do |t|
+      t.references :user, foreign_key: true
+      t.references :micropost, foreign_key: true
+
+      t.timestamps null: false
+    end
+    add_index :dislikes, [:user_id, :micropost_id], unique: true
+  end
+end
+----
+
+Now we can migrate the database:
+
+[source, console]
+----
+$ rails db:migrate
+----
+
+The User, Micropost, Like and Dislike models should be edited as follows:
+
+.app/models/user.rb
+
+[source, ruby]
+----
+class User < ApplicationRecord
+  has_many :likes, dependent: :destroy
+  has_many :dislikes, dependent: :destroy
+  has_many :liked_posts, through: :likes, source: :micropost
+  has_many :disliked_posts, through: :dislikes, source: :micropost
+end
+----
+
+.app/models/micropost.rb
+
+[source, ruby]
+----
+class Micropost < ApplicationRecord
+  has_many :likes, dependent: :destroy
+  has_many :dislikes, dependent: :destroy
+  has_many :likers, through: :likes, source: :user
+  has_many :dislikers, through: :dislikes, source: :user
+end
+----
+
+.app/models/like.rb
+
+[source, ruby]
+----
+class Like < ApplicationRecord
+  belongs_to :user
+  belongs_to :micropost
+  validates :user_id, presence: true
+  validates :micropost_id, presence: true
+end
+----
+
+.app/models/dislike.rb
+
+[source, ruby]
+----
+class Dislike < ApplicationRecord
+  belongs_to :user
+  belongs_to :micropost
+  validates :user_id, presence: true
+  validates :micropost_id, presence: true	
+end
+----
+
+See: http://guides.rubyonrails.org/association_basics.html
+
+The above associations lead to a powerful combination of Active Record and array-like behavior. + 
+For example, we can check if the liked_posts collection include a particular micropost or if a micropost has received a like from a certain user:
+
+user.liked_posts.include?(micropost) + 
+user.liked_posts.find(micropost_id) + 
+micropost.likers.include?(user) + 
+micropost.likers.find(user_id) + 
+user.likes.count + 
+user.dislikes.count + 
+micropost.likes.count + 
+micropost.dislikes.count + 
+
+micropost.likes.include?(like) + 
+micropost.likes.find(like_id)
+
+Where micropost is a defined micropost, user is a defined user and like is a defined like. + 
+The last two examples are rarely used.
+
+=== Tests for the Like and Dislike models
+
+First of all it is necessary to delete the default fixtures and create new records:
+
+.test/fixtures/likes.yml
+
+[source, yaml]
+----
+like1:
+  user: michael
+  micropost: tone
+	
+like2:
+  user: michael
+  micropost: van
+	
+like3:
+  user: lana
+  micropost: orange	
+----
+
+.test/fixtures/dislikes.yml
+
+[source, yaml]
+----
+dislike1:
+  user: archer
+  micropost: cat_video
+	
+dislike2:
+  user: lana
+  micropost: cat_video
+	
+dislike3:
+  user: lana
+  micropost: tau_manifesto
+----
+
+Only Michael and Lana are following each other, so they can like and dislike each other's microposts. Likes and dislikes can be created by any user following another user. + 
+So the condition for a user to like or dislike a micropost is that that user be following the owner of that micropost.
+
+.test/models/like_test.rb
+
+[source, ruby]
+----
+require 'test_helper'
+
+class LikeTest < ActiveSupport::TestCase
+
+  def setup
+    lana = users(:lana)
+    micropost = microposts(:most_recent)
+    @like = lana.likes.build(micropost_id: micropost.id)
+  end
+
+  test "should be valid" do
+    assert @like.valid?
+  end
+
+  test "user id should be present" do
+    @like.user_id = nil
+    assert_not @like.valid?
+  end
+
+  test "micropost id should be present" do
+    @like.micropost_id = nil
+    assert_not @like.valid?
+  end
+	
+end
+----
+
+.test/models/dislike_test.rb
+
+[source, ruby]
+----
+require 'test_helper'
+
+class DisikeTest < ActiveSupport::TestCase
+
+  def setup
+    archer = users(:archer)
+    micropost = microposts(:tau_manifesto)
+    @dislike = archer.dislikes.build(micropost_id: micropost.id)
+  end
+
+  test "should be valid" do
+    assert @dislike.valid?
+  end
+
+  test "user id should be present" do
+    @dislike.user_id = nil
+    assert_not @dislike.valid?
+  end
+
+  test "micropost id should be present" do
+    @dislike.micropost_id = nil
+    assert_not @dislike.valid?
+  end
+	
+end
+----
+
+Now it is time to add the required code in the micropost partial. + 
+We will use two entypos icons (thumb_up.png and thumb_down.png) for likes and dislikes, that you can find in the "images" directory.
+Beside the icons we should report the count of likes and dislikes.
+
+.app/views/microposts/_micropost.html.erb
+
+[source, html, erb]
+----
+...
+
+<% if logged_in? %>
+  <div class="likes">
+    <%= form_for(current_user.likes.build, remote: true) do |f| %>
+      <%= render 'shared/error_messages', object: f.object %>
+      <%= f.hidden_field :micropost_id, value: micropost.id %>
+      <%= image_submit_tag("thumb_up.png", class: "thumb_up") %>
+    <% end %>
+
+    <%= form_for(current_user.dislikes.build, remote: true) do |f| %>
+      <%= render 'shared/error_messages', object: f.object %>
+      <%= f.hidden_field :micropost_id, value: micropost.id %>
+      <%= image_submit_tag("thumb_down.png", class: "thumb_down") %>
+    <% end %>
+
+    <strong id="likes_count-<%= micropost.id %>" class="stat">
+      likes: <%= micropost.likes.count %>
+    </strong>
+
+    <strong id="dislikes_count-<%= micropost.id %>" class="stat">
+      dislikes: <%= micropost.dislikes.count %>
+    </strong>
+  </div>
+<% end %>
+
+...
+----
+
+.app/views/microposts/show.html.erb
+
+[source, html, erb]
+----
+...
+
+<% if logged_in? %>
+  <div class="likes">
+    <%= form_for(current_user.likes.build, remote: true) do |f| %>
+      <%= render 'shared/error_messages', object: f.object %>
+      <%= f.hidden_field :micropost_id, value: @micropost.id %>
+      <%= image_submit_tag("thumb_up.png", class: "thumb_up") %>
+    <% end %>
+
+    <%= form_for(current_user.dislikes.build, remote: true) do |f| %>
+      <%= render 'shared/error_messages', object: f.object %>
+      <%= f.hidden_field :micropost_id, value: @micropost.id %>
+      <%= image_submit_tag("thumb_down.png", class: "thumb_down") %>
+    <% end %>
+
+    <strong id="likes_count-<%= @micropost.id %>" class="stat">
+      likes: <%= @micropost.likes.count %>
+    </strong>
+
+    <strong id="dislikes_count-<%= @micropost.id %>" class="stat">
+      dislikes: <%= @micropost.dislikes.count %>
+    </strong>
+  </div>
+<% end %>
+
+...
+----
+
+Add style to the code:
+
+.app/assets/stylesheets/custom.css.scss
+
+[source, scss]
+----
+...
+
+/* LIKES AND DISLIKES */
+
+.likes {
+  overflow: auto;
+  margin-top: 10px;
+  margin-left: 60px;
+  padding: 0;
+  input {
+    float: left;
+    padding-right: 12px;
+    width: initial;
+    border: 0px;
+    &:first-child {
+      padding-left: 0;
+    }
+    &:hover {
+      cursor: pointer;
+    }
+  }
+  strong {
+    float: left;
+    margin-left: 10px;
+    color: $gray-light;
+  }
+}
+----
+
+NOTE: we set 'width: initial' to preserve the initial size of the icons + 
+See: https://www.w3schools.com/CSSref/pr_dim_width.asp
+
+=== The Likes and Dislikes controllers
+
+Let's generate now the Likes and Dislikes controller:
+
+[source, console]
+----
+$ rails generate controller Likes
+$ rails generate controller Dislikes
+----
+
+.app/controllers/likes_controller.rb
+
+[source, ruby]
+----
+class LikesController < ApplicationController
+  before_action :logged_in_user, only: [:create]
+  before_action :correct_user,	 only: [:create]
+
+  def create
+    @like = current_user.likes.build(like_params)
+    @dislike = @micropost.dislikes.find_by(user_id: current_user.id)
+    @dislike.destroy if @dislike.present?
+    if !@micropost.likes.exists?(user_id: current_user.id) && @like.save
+      respond_to do |format|
+        format.html do
+          flash[:success] = 'like added!'
+          redirect_to request.referrer || root_url
+        end
+        format.js
+      end
+    end	
+  end
+	
+
+  private
+
+    def like_params
+      params.require(:like).permit(:user_id, :micropost_id)
+    end
+		
+    def correct_user
+      @micropost = Micropost.find(params[:like][:micropost_id])
+      micropost_user = @micropost.user
+      redirect_to (request.referrer || root_url) unless current_user.following.include?(micropost_user)
+    end	
+
+end
+----
+
+
+.app/controllers/dislikes_controller.rb
+
+[source, ruby]
+----
+class DislikesController < ApplicationController
+  before_action :logged_in_user, only: [:create]
+  before_action :correct_user,	 only: [:create]
+
+def create
+  @dislike = current_user.dislikes.build(dislike_params)
+  @like = @micropost.likes.find_by(user_id: current_user.id)
+  @like.destroy if @like.present?
+  if !@micropost.dislikes.exists?(user_id: current_user.id) && @dislike.save
+    respond_to do |format|
+      format.html do
+        flash[:success] = 'like added!'
+        redirect_to request.referrer || root_url
+      end
+      format.js
+    end
+  end	
+end
+	
+
+	private
+
+    def dislike_params
+      params.require(:dislike).permit(:user_id, :micropost_id)
+    end
+		
+    def correct_user
+      @micropost = Micropost.find(params[:dislike][:micropost_id])
+      micropost_user = @micropost.user
+      redirect_to (request.referrer || root_url) unless current_user.following.include?(micropost_user)
+    end	
+		
+end
+----
+
+NOTE: with the conditional we check if a like from current_user to that micropost already exists. + 
+If it does not exist the like is saved
+
+NOTE: we would like that if a user puts twice or more the same like nothing happens. + 
+So we used a 'if' conditional without 'else'
+
+NOTE: request.referrer redirect back to the page issuing the like or dislike request + 
+See: https://www.railstutorial.org/book/user_microposts#cha-13_footnote-ref-12
+
+NOTE: If a before filter renders or redirects, the action will not run. + 
+If there are additional filters scheduled to run after that filter they are also cancelled. + 
+See: https://stackoverflow.com/a/6353504/5078888 + 
+See: https://guides.rubyonrails.org/v5.2.0/action_controller_overview.html#filters
+
+
+Add now the required routes:
+
+.config/routes.rb
+
+[source, ruby]
+----
+resources :likes,            only: [:create]
+resources :dislikes,         only: [:create]
+----
+
+
+To make Ajax work it is necessary to create the following files:
+
+.app/views/likes/create.js.erb
+
+[source, javascript, erb]
+----
+$("#likes_count-<%= @micropost.id %>").html('likes: <%= @micropost.likes.count %>');
+$("#dislikes_count-<%= @micropost.id %>").html('dislikes: <%= @micropost.dislikes.count %>');
+----
+
+.app/views/dislikes/create.js.erb
+
+[source, javascript, erb]
+----
+$("#dislikes_count-<%= @micropost.id %>").html('dislikes: <%= @micropost.dislikes.count %>');
+$("#likes_count-<%= @micropost.id %>").html('likes: <%= @micropost.likes.count %>');
+----
+
+
+=== Controller tests
+
+.test/controllers/likes_controller_test.rb
+
+[source, ruby]
+----
+require 'test_helper'
+
+class LikesControllerTest < ActionDispatch::IntegrationTest
+
+  def setup
+    @archer = users(:archer)
+    @malory = users(:malory)
+    @micropost = microposts(:tau_manifesto)
+  end
+
+  test "should redirect create when not logged in" do
+    assert_no_difference 'Like.count' do
+      post likes_path, params: { like: { user_id: @archer.id, micropost_id: @micropost.id } }
+    end
+    assert_redirected_to login_url
+  end
+	
+  test "should redirect create when not correct user" do
+    log_in_as(@malory)
+    assert_no_difference 'Like.count' do
+      post likes_path, params: { like: { user_id: @malory.id, micropost_id: @micropost.id } }
+    end
+    assert_redirected_to root_url			
+  end
+
+end
+----
+
+.test/controllers/dislikes_controller_test.rb
+
+[source, ruby]
+----
+require 'test_helper'
+
+class DislikesControllerTest < ActionDispatch::IntegrationTest
+
+  def setup
+    @archer = users(:archer)
+    @malory = users(:malory)
+    @micropost = microposts(:tau_manifesto)
+  end
+
+  test "should redirect create when not logged in" do
+    assert_no_difference 'Dislike.count' do
+      post dislikes_path, params: { dislike: { user_id: @archer.id, micropost_id: @micropost.id } }
+    end
+    assert_redirected_to login_url
+  end
+
+  test "should redirect create when not correct user" do
+    log_in_as(@malory)
+    assert_no_difference 'Dislike.count' do
+      post dislikes_path, params: { dislike: { user_id: @malory.id, micropost_id: @micropost.id } }
+    end
+    assert_redirected_to root_url
+  end
+
+end
+----
+
+=== Layout test
+
+.test/integration/microposts_interface_test.rb
+
+[source, ruby]
+----
+test "like/dislike interface" do
+  @lana = users(:lana)
+  log_in_as(@lana)
+  get user_path(@user)
+  first_micropost = @user.microposts.paginate(page: 1).first
+  assert_equal microposts(:most_recent), first_micropost
+  @user.microposts.paginate(page: 1).each do |micropost|
+    assert_select "#likes_count-#{micropost.id}"
+    assert_select "#dislikes_count-#{micropost.id}"
+  end
+  assert_difference 'first_micropost.likes.count', 1 do
+    post likes_path params: { like: { micropost_id: first_micropost.id } }
+  end
+  assert_redirected_to root_url
+  likes_count1 = first_micropost.likes.count
+  get user_path(@user)
+  assert_difference 'first_micropost.dislikes.count', 1 do
+    post dislikes_path params: { dislike: { micropost_id: first_micropost.id } }
+  end
+  assert_redirected_to root_url
+  likes_count2 = first_micropost.likes.reload.count
+  assert_not_equal likes_count1, likes_count2
+end
+----
+
+[source, console]
+----
+$ rails test
+$ git add -A
+$ git commit -m "Add likes and dislikes"
+$ git checkout master
+$ git merge likes-dislikes
+$ git status
+$ git branch
+$ git branch -d likes-dislikes
+$ git push
+----
+
+
+
+
+
+
